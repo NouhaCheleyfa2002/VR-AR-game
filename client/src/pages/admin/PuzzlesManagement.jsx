@@ -29,26 +29,31 @@ import {
   createPuzzle,
   updatePuzzle,
   deletePuzzle,
-} from '../../api/PuzzleApi'; // Adjust the import path as needed
+} from '../../api/PuzzleApi';
+
+// You'll need to create this API call or import it
+import { getAllLevels } from '../../api/LevelApi'; // Adjust import path as needed
 
 const ManagePuzzlePage = () => {
   const [puzzles, setPuzzles] = useState([]);
+  const [levels, setLevels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('');
   const [sort, setSort] = useState('');
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingPuzzle, setEditingPuzzle] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState(null); // puzzleId to confirm
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [selected, setSelected] = useState([]);
 
   const [page, setPage] = useState(1);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [actionLoading, setActionLoading] = useState(false);
   const itemsPerPage = 6;
 
-  // Fetch puzzles on component mount
   useEffect(() => {
     fetchPuzzles();
+    fetchLevels();
   }, []);
 
   const fetchPuzzles = async () => {
@@ -65,11 +70,24 @@ const ManagePuzzlePage = () => {
     }
   };
 
+  const fetchLevels = async () => {
+    try {
+      const data = await getAllLevels();
+      setLevels(data);
+    } catch (error) {
+      console.error('Error loading levels:', error);
+      setSnackbar({ open: true, message: 'Failed to load levels', severity: 'error' });
+    }
+  };
+
   const filteredPuzzles = useMemo(() => {
     let list = [...puzzles];
 
     if (search) {
-      list = list.filter((p) => p.question.toLowerCase().includes(search.toLowerCase()));
+      list = list.filter((p) => 
+        p.question.toLowerCase().includes(search.toLowerCase()) ||
+        p.title.toLowerCase().includes(search.toLowerCase())
+      );
     }
     if (filter) {
       list = list.filter((p) => p.difficulty === filter);
@@ -77,7 +95,7 @@ const ManagePuzzlePage = () => {
     if (sort === 'difficulty') {
       list.sort((a, b) => a.difficulty.localeCompare(b.difficulty));
     } else if (sort === 'alphabetical') {
-      list.sort((a, b) => a.question.localeCompare(b.question));
+      list.sort((a, b) => a.title.localeCompare(b.title));
     }
 
     return list;
@@ -94,14 +112,15 @@ const ManagePuzzlePage = () => {
       
       if (editingPuzzle) {
         // Update existing puzzle
-        const updatedPuzzle = await updatePuzzle(editingPuzzle.puzzleId, puzzleData);
+        const updatedPuzzle = await updatePuzzle(editingPuzzle._id, puzzleData);
         setPuzzles((prev) =>
-          prev.map((p) => (p.puzzleId === editingPuzzle.puzzleId ? updatedPuzzle : p))
+          prev.map((p) => (p._id === editingPuzzle._id ? updatedPuzzle : p))
         );
         setSnackbar({ open: true, message: 'Puzzle updated successfully', severity: 'success' });
       } else {
         // Create new puzzle
         const newPuzzle = await createPuzzle(puzzleData);
+        
         setPuzzles((prev) => [...prev, newPuzzle]);
         setSnackbar({ open: true, message: 'Puzzle created successfully', severity: 'success' });
       }
@@ -125,7 +144,8 @@ const ManagePuzzlePage = () => {
       setActionLoading(true);
       
       await deletePuzzle(id);
-      setPuzzles((prev) => prev.filter((p) => p.puzzleId !== id));
+     
+      setPuzzles((prev) => prev.filter((p) => p._id !== id));
       setSnackbar({ open: true, message: 'Puzzle deleted successfully', severity: 'success' });
     } catch (error) {
       console.error('Error deleting puzzle:', error);
@@ -174,6 +194,7 @@ const ManagePuzzlePage = () => {
           onChange={(e) => setSearch(e.target.value)}
           variant="outlined"
           size="small"
+          placeholder="Search by title or question"
         />
         <FormControl size="small">
           <InputLabel>Difficulty</InputLabel>
@@ -204,8 +225,6 @@ const ManagePuzzlePage = () => {
         </FormControl>
       </Box>
 
-
-
       {puzzles.length === 0 ? (
         <Box textAlign="center" py={4}>
           <Typography variant="h6" color="textSecondary">
@@ -218,7 +237,7 @@ const ManagePuzzlePage = () => {
       ) : (
         <Grid container spacing={3}>
           {paginated.map((puzzle) => (
-            <Grid item xs={12} sm={6} md={4} key={puzzle.puzzleId}>
+            <Grid item xs={12} sm={6} md={4} key={puzzle._id}>
               <Box position="relative">
                 <PuzzleCard
                   puzzle={puzzle}
@@ -228,18 +247,18 @@ const ManagePuzzlePage = () => {
                   }}
                 />
                 <Checkbox
-                  checked={selected.includes(puzzle.puzzleId)}
+                  checked={selected.includes(puzzle._id)}
                   onChange={(e) => {
                     const checked = e.target.checked;
                     setSelected((prev) =>
-                      checked ? [...prev, puzzle.puzzleId] : prev.filter((id) => id !== puzzle.puzzleId)
+                      checked ? [...prev, puzzle._id] : prev.filter((id) => id !== puzzle._id)
                     );
                   }}
                   sx={{ position: 'absolute', top: 8, left: 8 }}
                 />
 
                 <IconButton
-                  onClick={() => setConfirmDelete(puzzle.puzzleId)}
+                  onClick={() => setConfirmDelete(puzzle._id)}
                   sx={{ position: 'absolute', top: 8, right: 8, color: 'red' }}
                   disabled={actionLoading}
                 >
@@ -265,16 +284,20 @@ const ManagePuzzlePage = () => {
         <DialogContent dividers>
           <PuzzleEditor
             initialData={editingPuzzle || {
-              question: 'Enter your puzzle question here...',
-              solution: 'SampleSolution',
+              title: '',
+              question: '',
+              solution: '',
               difficulty: 'Easy',
+              levelId: '',
             }}
+            levels={levels}
             onSave={handleSave}
             onCancel={() => {
               setEditorOpen(false);
               setEditingPuzzle(null);
             }}
             loading={actionLoading}
+            isEditing={!!editingPuzzle}
           />
         </DialogContent>
       </Dialog>

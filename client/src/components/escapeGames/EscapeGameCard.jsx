@@ -1,8 +1,11 @@
-import React from 'react';
-import { FaClock, FaUsers } from 'react-icons/fa';
-import { MdEdit, MdDelete } from 'react-icons/md';
 
-const EscapeGameCard = ({ game, onEdit, onDelete }) => {
+import { FaClock, FaUsers } from 'react-icons/fa';
+import { Chip } from '@mui/material';
+import { MdEdit, MdDelete, MdSave } from 'react-icons/md';
+
+
+const EscapeGameCard = ({ game, onEdit, onDelete, handleToggleStatus }) => {
+  
   return (
     <div className="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition border border-gray-200 space-y-3">
       <div className="flex justify-between items-start">
@@ -10,13 +13,14 @@ const EscapeGameCard = ({ game, onEdit, onDelete }) => {
           <h3 className="text-xl font-bold text-blue-700">{game.title}</h3>
           <p className="text-sm text-gray-500">{game.theme} • {game.culturalContext}</p>
         </div>
-        <span
-          className={`text-xs font-semibold px-3 py-1 rounded-full ${
-            game.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-          }`}
-        >
-          {game.isActive ? 'Active' : 'Inactive'}
-        </span>
+        
+        <Chip
+          label={game.isActive ? 'Active' : 'Inactive'}
+          color={game.isActive ? 'success' : 'default'}
+          size="small"
+        />
+
+
       </div>
 
       <p className="text-gray-700 text-sm line-clamp-3">
@@ -37,6 +41,15 @@ const EscapeGameCard = ({ game, onEdit, onDelete }) => {
 
         {(onEdit || onDelete) && (
           <div className="flex gap-2">
+             {handleToggleStatus && (
+              <button
+                onClick={() => handleToggleStatus(game)}
+                className="text-blue-600 hover:text-blue-800"
+                title="status"
+              >
+                <MdSave size={20} />
+              </button>
+            )}
             {onEdit && (
               <button
                 onClick={() => onEdit(game)}

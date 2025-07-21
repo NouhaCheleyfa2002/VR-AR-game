@@ -27,18 +27,6 @@ const sceneSchema = new mongoose.Schema({
     type: String,
     enum: ['2D', 'VR', 'AR'],
     required: true
-  },
-  isInteractive: {
-    type: Boolean,
-    default: true
-  },
-  manageScene: {
-    type: Boolean,
-    default: false
-  },
-  viewScene: {
-    type: Boolean,
-    default: true
   }
 }, {
   timestamps: true

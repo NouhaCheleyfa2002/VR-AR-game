@@ -5,28 +5,28 @@ import { protect, authorize } from '../middleware/auth.js';
 import {
   getAllRooms,
   getRoomById,
-  getRoomByCode,
+  joinRoom,
   createRoom,
   updateRoom,
   deleteRoom
 } from '../controllers/MultiplayerRoom.js';
 
 // GET /api/rooms
-roomRouter.get('/',protect,authorize('admin'), getAllRooms);
+roomRouter.get('/', getAllRooms);
 
 // GET /api/rooms/:id
-roomRouter.get('/:id',protect,authorize('admin'), getRoomById);
+roomRouter.get('/:id', getRoomById);
 
-// GET /api/rooms/code/:code
-roomRouter.get('/code/:code',protect,authorize('admin'), getRoomByCode);
+
+roomRouter.post('/:id/join', protect, joinRoom);
 
 // POST /api/rooms
-roomRouter.post('/',protect,authorize('admin'), createRoom);
+roomRouter.post('/', createRoom);
 
 // PUT /api/rooms/:id
-roomRouter.put('/:id',protect,authorize('admin'), updateRoom);
+roomRouter.put('/:id', updateRoom);
 
 // DELETE /api/rooms/:id
-roomRouter.delete('/:id',protect,authorize('admin'), deleteRoom);
+roomRouter.delete('/:id',deleteRoom);
 
 export default roomRouter;

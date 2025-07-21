@@ -48,7 +48,7 @@ const FeedbackManagementPage = () => {
 
     try {
       await deleteFeedback(id);
-      setFeedbacks((prev) => prev.filter((f) => f.feedbackId !== id));
+      setFeedbacks((prev) => prev.filter((f) => f._id !== id));
       toast.success('Feedback deleted');
     } catch (error) {
       toast.error('Failed to delete feedback');
@@ -67,10 +67,10 @@ const FeedbackManagementPage = () => {
 
   const columns = [
     {
-      field: 'playerName',
+      field: 'player',
       headerName: 'Player',
       flex: 1,
-      renderCell: ({ value }) => value || 'Anonymous',
+      renderCell: ({ row }) => row.playerId?.email || 'Anonymous',
     },
     {
       field: 'rating',
@@ -100,11 +100,13 @@ const FeedbackManagementPage = () => {
       ),
     },
     {
-      field: 'date',
+      field: 'createdAt',
       headerName: 'Date',
       flex: 1,
-      valueGetter: (params) => params.row.date || params.row.createdAt, // in case your backend uses createdAt
-      renderCell: ({ value }) => (value ? format(new Date(value), 'PPPp') : ''),
+      renderCell: ({ row }) => {
+        const rawDate = row.createdAt;
+        return rawDate ? format(new Date(rawDate), 'PPPp') : '';
+      },
     },
     {
       field: 'actions',
@@ -115,7 +117,7 @@ const FeedbackManagementPage = () => {
       renderCell: ({ row }) => (
         <Stack direction="row" spacing={1}>
           <Tooltip title="Delete">
-            <IconButton onClick={() => handleDelete(row.feedbackId)}>
+            <IconButton onClick={() => handleDelete(row._id)}>
               <Delete color="error" />
             </IconButton>
           </Tooltip>
@@ -149,7 +151,7 @@ const FeedbackManagementPage = () => {
       <Box mt={2} sx={{ height: 600, width: '100%' }}>
         <DataGrid
           rows={filtered}
-          getRowId={(row) => row.feedbackId}
+          getRowId={(row) => row._id}
           columns={columns}
           pageSize={8}
           rowsPerPageOptions={[5, 8, 10]}

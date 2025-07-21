@@ -8,8 +8,7 @@ import {
   createEscapeGame,
   updateEscapeGame,
   deleteEscapeGame,
-  //getEscapeGamesByTheme,
-  //toggleEscapeGameActive 
+  toggleEscapeGameActive 
 } from '../controllers/EscapeGame.js';
 
 // GET /api/escape-games
@@ -18,16 +17,14 @@ GameRouter.get('/', getAllEscapeGames);
 GameRouter.get('/:id', getEscapeGameById);
 
 // POST /api/escape-games
-GameRouter.post('/', protect, authorize('admin'), createEscapeGame);
+GameRouter.post('/', createEscapeGame);
 
 // PUT /api/escape-games/:id
-GameRouter.put('/:id', protect, authorize('admin'), updateEscapeGame);
+GameRouter.put('/:id', updateEscapeGame);
 
 // DELETE /api/escape-games/:id
-GameRouter.delete('/:id', protect, authorize('admin'), deleteEscapeGame);
+GameRouter.delete('/:id',  deleteEscapeGame);
 
-//GameRouter.get('/theme/:theme', getEscapeGamesByTheme);
-
-//GameRouter.patch('/:id/toggle-active', protect, authorize('admin'), toggleEscapeGameActive);
+GameRouter.patch('/:id/toggle-active', toggleEscapeGameActive);
 
 export default GameRouter;

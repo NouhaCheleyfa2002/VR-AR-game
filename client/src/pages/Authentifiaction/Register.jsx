@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
+import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import * as yup from 'yup';
 import { toast, ToastContainer } from 'react-toastify';
+import { AuthContext } from '../../context/AuthContext';
 import { FiUser, FiMail, FiLock } from 'react-icons/fi';
 import { ImSpinner2 } from 'react-icons/im';
 
 const registerSchema = yup.object().shape({
-  username: yup.string().required('Username is required'),
+  userName: yup.string().required('Username is required'),
   email: yup.string().email('Invalid email').required(),
   password: yup.string().min(6, 'Password must be at least 6 characters').required(),
   confirmPassword: yup.string()
@@ -16,8 +18,13 @@ const registerSchema = yup.object().shape({
 
 const Register = () => {
   const navigate = useNavigate();
+  const { backendUrl, login } = useContext(AuthContext);
+
   const [formData, setFormData] = useState({
-    username: '', email: '', password: '', confirmPassword: ''
+    userName: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -28,18 +35,38 @@ const Register = () => {
     try {
       await registerSchema.validate(formData, { abortEarly: false });
 
-      console.log('📥 Mock registration:', {
-        username: formData.username,
+      // Prepare payload without confirmPassword
+      const payload = {
+        userName: formData.userName,
         email: formData.email,
-        password: formData.password,
-      });
+        password: formData.password
+      };
 
+      // Call real API
+      const response = await axios.post(
+        `${backendUrl}/users/register`,
+        payload
+      );
+
+      const { token, user } = response.data.data;
+
+      // Persist token and user
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      // Update context and navigate
+      login({ token, user });
       toast.success('Registration successful! Redirecting...', { autoClose: 2000 });
-      setTimeout(() => navigate('/login'), 2500);
-
+      setTimeout(
+        () => navigate(user.role === 'admin' ? '/admin' : '/player'),
+        2000
+      );
     } catch (err) {
       if (err.name === 'ValidationError') {
-        err.inner.forEach(e => toast.error(e.message));
+        err.inner.forEach((e) => toast.error(e.message));
+      } else if (err.response && err.response.data) {
+        toast.error(err.response.data.message || 'Registration failed');
       } else {
         toast.error('Registration failed');
       }
@@ -63,8 +90,8 @@ const Register = () => {
             type="text"
             placeholder="Username"
             className="w-full border pl-10 pr-3 py-2 rounded focus:ring-2 focus:ring-blue-300 outline-none transition"
-            value={formData.username}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+            value={formData.userName}
+            onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
           />
         </div>
 

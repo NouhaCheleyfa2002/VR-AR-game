@@ -41,13 +41,15 @@ function App() {
         <Route element={<ProtectedRoute requiredRole="player" />}>
           <Route path="/player">
             <Route path="/player" element={<Home />} />
-            <Route path="/player/gameplaysession" element={<GameplaySessionViewer/>} />
-            <Route path="/player/hint" element={<HintPage />} />
-            <Route path="/player/feedback" element={<FeedbackPage />} />
-            <Route path="/player/join-room" element={<JoinRoomPage />} />
+            <Route path="/player/gameplaysessions" element={<GameplaySessionViewer/>} />
+            <Route path="/player/hints" element={<HintPage />} />
+            <Route path="/player/feedbacks" element={<FeedbackPage />} />
+            
+            <Route path="/player/rooms/:roomId" element={<PlayerRoomPage />} />
+            <Route path="/player/rooms/:roomId/join" element={<JoinRoomPage />} />
            
-            <Route path="/player/room/:roomId" element={<PlayerRoomPage />} />
-            <Route path="/player/invitation" element={<PlayerInvitationPage />} />
+           
+            <Route path="/player/invitations" element={<PlayerInvitationPage />} />
           </Route>
         </Route>
         

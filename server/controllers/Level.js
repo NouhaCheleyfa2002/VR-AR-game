@@ -31,7 +31,7 @@ export const getLevelById = async (req, res) => {
 
     const level = await Level.findById(id)
       .populate('scenarioId', 'title description category')
-      .populate('puzzle', 'title type difficulty instructions')
+      .populate('puzzle', 'title type difficulty question')
       .populate('scene', 'title description backgroundImage');
 
     if (!level) {

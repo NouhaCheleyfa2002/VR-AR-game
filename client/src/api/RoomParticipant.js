@@ -6,7 +6,8 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL;
 export const getAllParticipants = async () => {
   try {
     const response = await axios.get(`${backendUrl}/participants`);
-    const data = response.data.data || response.data || [];
+    const data = response.data.data;
+    console.log("data", data);
     return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching participants:', error);
@@ -41,7 +42,9 @@ export const getParticipantsByRoomId = async (roomId) => {
 export const getParticipantsByPlayerId = async (playerId) => {
   try {
     const response = await axios.get(`${backendUrl}/participants/player/${playerId}`);
-    const data = response.data.data || response.data || [];
+    const data = response.data.data;
+    console.log("data", data);
+    
     return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching participants by player ID:', error);

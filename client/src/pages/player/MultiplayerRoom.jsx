@@ -1,108 +1,71 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
+import {
+  Typography,
+  Container,
+  CircularProgress,
+  Alert,
+  Snackbar,
+  Button,
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Paper,
+  Chip
+} from '@mui/material';
+import QRCode from 'react-qr-code';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Share, ContentCopy } from '@mui/icons-material';
 import MultiplayerRoomCard from '../../components/rooms/MultiplayerRoomCard';
 import ParticipantList from '../../components/roomParticipant/PaticipantList';
-import { 
-  Typography, 
-  Container, 
-  CircularProgress, 
-  Alert, 
-  Snackbar, 
-  Button, 
-  Box 
-} from '@mui/material';
-import { useNavigate, useParams } from 'react-router-dom';
-import {
-  getRoomById,
-  getRoomByCode,
-  updateRoom,
-} from '../../api/RoomApi'; // Adjust the import path as needed
+import { getRoomById, updateRoom } from '../../api/RoomApi';
+import { useRoom } from '../../context/RoomContext';
 
 const PlayerRoomPage = () => {
-  const [room, setRoom] = useState(null);
-  const [participant, setParticipant] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    room,
+    participant,
+    loading: contextLoading,
+    error: contextError,
+    leaveRoom: contextLeaveRoom,
+    joinRoom
+  } = useRoom();
+
   const [updating, setUpdating] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [pollingInterval, setPollingInterval] = useState(null);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [localLoading, setLocalLoading] = useState(true);
+
   const navigate = useNavigate();
-  const { roomId, roomCode } = useParams(); // Assuming you'll pass room info via URL params
+  const { roomId } = useParams();
 
   useEffect(() => {
-    initializeRoom();
-    
-    // Set up polling for real-time updates
-    const interval = setInterval(fetchRoomData, 5000); // Poll every 5 seconds
+    // Initialize room if not already loaded
+    if (!room && !contextLoading) {
+      initializeRoom();
+    } else {
+      setLocalLoading(false);
+    }
+
+    // Set up polling
+    const interval = setInterval(fetchRoomData, 5000);
     setPollingInterval(interval);
 
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [roomId, roomCode]);
+  }, [roomId, room, contextLoading]);
 
   const initializeRoom = async () => {
     try {
-      setLoading(true);
+      setLocalLoading(true);
       
-      // Get stored participant info
-      const storedParticipant = JSON.parse(localStorage.getItem('currentRoomParticipant'));
+      // Try to join the room through context
+      await joinRoom(roomId);
       
-      if (!storedParticipant) {
-        setSnackbar({
-          open: true,
-          message: 'No participant session found. Please join a room first.',
-          severity: 'error'
-        });
-        navigate('/player/join-room');
-        return;
-      }
-
-      // Fetch room data from API
-      let roomData;
-      if (roomId) {
-        roomData = await getRoomById(roomId);
-      } else if (roomCode) {
-        roomData = await getRoomByCode(roomCode);
-      } else {
-        // Try to get room info from stored participant
-        const storedRoom = JSON.parse(localStorage.getItem('currentMultiplayerRoom'));
-        if (storedRoom?.roomId) {
-          roomData = await getRoomById(storedRoom.roomId);
-        }
-      }
-
-      if (!roomData) {
-        setSnackbar({
-          open: true,
-          message: 'Room not found or no longer exists.',
-          severity: 'error'
-        });
-        navigate('/player/join-room');
-        return;
-      }
-
-      // Verify participant is still in the room
-      const currentParticipant = roomData.participants?.find(
-        p => p.participantId === storedParticipant.participantId
-      );
-
-      if (!currentParticipant) {
-        setSnackbar({
-          open: true,
-          message: 'You are no longer in this room.',
-          severity: 'error'
-        });
-        localStorage.removeItem('currentMultiplayerRoom');
-        localStorage.removeItem('currentRoomParticipant');
-        navigate('/player/join-room');
-        return;
-      }
-
-      // Update localStorage with fresh data
-      localStorage.setItem('currentMultiplayerRoom', JSON.stringify(roomData));
-      localStorage.setItem('currentRoomParticipant', JSON.stringify(currentParticipant));
-
-      setRoom(roomData);
-      setParticipant(currentParticipant);
       setSnackbar({
         open: true,
         message: 'Room loaded successfully',
@@ -115,17 +78,18 @@ const PlayerRoomPage = () => {
         message: 'Failed to load room data',
         severity: 'error'
       });
+      navigate(`/player/rooms/${roomId}/join`);
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   };
 
   const fetchRoomData = async () => {
-    if (!room) return;
+    if (!room || !participant) return;
 
     try {
-      const roomData = await getRoomById(room.roomId);
-      
+      const roomData = await getRoomById(room._id || room.roomId);
+
       if (!roomData) {
         setSnackbar({
           open: true,
@@ -136,11 +100,10 @@ const PlayerRoomPage = () => {
         return;
       }
 
-      // Check if participant is still in the room
       const currentParticipant = roomData.participants?.find(
         p => p.participantId === participant.participantId
       );
-
+      
       if (!currentParticipant) {
         setSnackbar({
           open: true,
@@ -150,54 +113,26 @@ const PlayerRoomPage = () => {
         handleLeaveRoom();
         return;
       }
-
-      // Update state only if there are changes
-      if (JSON.stringify(room) !== JSON.stringify(roomData)) {
-        setRoom(roomData);
-        setParticipant(currentParticipant);
-        
-        // Update localStorage
-        localStorage.setItem('currentMultiplayerRoom', JSON.stringify(roomData));
-        localStorage.setItem('currentRoomParticipant', JSON.stringify(currentParticipant));
-      }
     } catch (error) {
       console.error('Error fetching room data:', error);
-      // Don't show error for polling failures to avoid spam
     }
   };
 
   const handleReadyToggle = async (updatedParticipant) => {
-    if (updating) return;
+    if (updating || !room || !participant) return;
 
     try {
       setUpdating(true);
 
-      // Update participant's ready status
       const updatedParticipants = room.participants.map((p) =>
         p.participantId === updatedParticipant.participantId
           ? { ...p, isReady: updatedParticipant.isReady }
           : p
       );
 
-      const updatedRoomData = { 
-        ...room, 
-        participants: updatedParticipants 
-      };
+      const updatedRoomData = { ...room, participants: updatedParticipants };
 
-      // Update room via API
       await updateRoom(room.roomId, updatedRoomData);
-
-      // Update local state
-      const updatedSelf = updatedParticipants.find(
-        (p) => p.participantId === participant.participantId
-      );
-
-      setRoom(updatedRoomData);
-      setParticipant(updatedSelf);
-
-      // Update localStorage
-      localStorage.setItem('currentMultiplayerRoom', JSON.stringify(updatedRoomData));
-      localStorage.setItem('currentRoomParticipant', JSON.stringify(updatedSelf));
 
       setSnackbar({
         open: true,
@@ -217,41 +152,27 @@ const PlayerRoomPage = () => {
   };
 
   const handleLeaveRoom = () => {
-    // Clear polling interval
-    if (pollingInterval) {
-      clearInterval(pollingInterval);
-    }
-
-    // Clear localStorage
-    localStorage.removeItem('currentMultiplayerRoom');
-    localStorage.removeItem('currentRoomParticipant');
-
-    // Navigate back
-    navigate('/player/join-room');
+    if (pollingInterval) clearInterval(pollingInterval);
+    contextLeaveRoom();
+    navigate(`/player/rooms/${roomId}/join`);
   };
 
   const handleStartGame = async () => {
-    if (!allReady) return;
+    if (!allReady || !room) return;
 
     try {
       setUpdating(true);
-
-      // Update room status to Active
-      const updatedRoomData = { 
-        ...room, 
-        roomStatus: 'Active'
-      };
+      const updatedRoomData = { ...room, roomStatus: 'Active' };
 
       await updateRoom(room.roomId, updatedRoomData);
-      
+
       setSnackbar({
         open: true,
         message: 'Game started!',
         severity: 'success'
       });
 
-      // Navigate to game or implement game logic
-      // navigate('/game', { state: { room: updatedRoomData, participant } });
+      // TODO: Navigate to game logic
       console.log('Start game logic - Room:', updatedRoomData);
     } catch (error) {
       console.error('Error starting game:', error);
@@ -266,13 +187,40 @@ const PlayerRoomPage = () => {
   };
 
   const handleCloseSnackbar = (event, reason) => {
-    if (reason === 'clickaway') {
-      return;
-    }
+    if (reason === 'clickaway') return;
     setSnackbar({ ...snackbar, open: false });
   };
 
-  if (loading) {
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+    }
+  };
+
+  const shareRoom = async () => {
+    const shareUrl = `${window.location.origin}/player/rooms/${roomId}/join`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join My Game Room',
+          text: `Join my multiplayer game room: ${room?.roomName || 'Game Room'}`,
+          url: shareUrl,
+        });
+      } catch (err) {
+        console.log('Error sharing:', err);
+        copyToClipboard(shareUrl);
+      }
+    } else {
+      copyToClipboard(shareUrl);
+    }
+  };
+
+  if (contextLoading || localLoading) {
     return (
       <Container sx={{ mt: 6, textAlign: 'center' }}>
         <CircularProgress size={60} />
@@ -283,15 +231,15 @@ const PlayerRoomPage = () => {
     );
   }
 
-  if (!room || !participant) {
+  if (contextError || !room || !participant) {
     return (
       <Container sx={{ mt: 6 }}>
         <Typography variant="h6" color="text.secondary">
-          No room session found. Please scan a QR code to join.
+          {contextError || 'No room session found. Please scan a QR code to join.'}
         </Typography>
         <Button 
           variant="contained" 
-          onClick={() => navigate('/player/join-room')}
+          onClick={() => navigate(`/player/rooms/${roomId}/join`)} 
           sx={{ mt: 2 }}
         >
           Join Room
@@ -301,6 +249,7 @@ const PlayerRoomPage = () => {
   }
 
   const allReady = room.participants?.every((p) => p.isReady) || false;
+  const joinUrl = `${window.location.origin}/player/rooms/${roomId}/join`;
 
   return (
     <Container sx={{ mt: 4 }}>
@@ -308,12 +257,7 @@ const PlayerRoomPage = () => {
         <Typography variant="h4" gutterBottom>
           Multiplayer Room
         </Typography>
-        <Button
-          color="error"
-          variant="outlined"
-          onClick={handleLeaveRoom}
-          size="small"
-        >
+        <Button color="error" variant="outlined" onClick={handleLeaveRoom} size="small">
           Leave Room
         </Button>
       </Box>
@@ -327,21 +271,147 @@ const PlayerRoomPage = () => {
           onReadyToggle={handleReadyToggle}
           disabled={updating}
         />
+      </Box>
 
-        {allReady && (
-          <Box mt={3} display="flex" justifyContent="center">
+      {/* Host-only controls */}
+      {participant?.isHost && (
+        <Box mt={4}>
+          <Typography variant="h6" gutterBottom>
+            Host Controls
+          </Typography>
+
+          <Paper sx={{ p: 3, mb: 3 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Invite Players
+            </Typography>
+            
+            <Box display="flex" gap={2} mb={2}>
+              <Button 
+                variant="outlined" 
+                onClick={() => setQrOpen(true)}
+                startIcon={<QRCode size={20} />}
+              >
+                Show QR Code
+              </Button>
+              
+              <Button 
+                variant="outlined" 
+                onClick={shareRoom}
+                startIcon={<Share />}
+              >
+                Share Room
+              </Button>
+              
+              <Button 
+                variant="outlined" 
+                onClick={() => copyToClipboard(joinUrl)}
+                startIcon={<ContentCopy />}
+                color={copySuccess ? "success" : "primary"}
+              >
+                {copySuccess ? "Copied!" : "Copy Link"}
+              </Button>
+            </Box>
+
+            <Box>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Room Code: 
+                <Chip 
+                  label={room.roomCode || roomId.slice(-6)} 
+                  size="small" 
+                  sx={{ ml: 1 }}
+                  onClick={() => copyToClipboard(room.roomCode || roomId.slice(-6))}
+                />
+              </Typography>
+            </Box>
+          </Paper>
+
+          {allReady ? (
             <Button
               variant="contained"
               color="primary"
               onClick={handleStartGame}
               disabled={updating}
               size="large"
+              fullWidth
             >
               {updating ? <CircularProgress size={24} /> : 'Start Game'}
             </Button>
+          ) : (
+            <Alert severity="info">
+              Waiting for all players to be ready... ({room.participants?.filter(p => p.isReady).length || 0}/{room.participants?.length || 0})
+            </Alert>
+          )}
+        </Box>
+      )}
+
+      {/* Enhanced QR Code Dialog */}
+      <Dialog open={qrOpen} onClose={() => setQrOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ textAlign: 'center' }}>
+          Scan to Join Room
+        </DialogTitle>
+        
+        <DialogContent sx={{ textAlign: 'center', p: 3 }}>
+          <Paper elevation={0} sx={{ p: 3, bgcolor: 'white', display: 'inline-block' }}>
+            <QRCode 
+              value={joinUrl}
+              size={256}
+              style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+            />
+          </Paper>
+          
+          <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+            {room.roomName}
+          </Typography>
+          
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Room Code: <strong>{room.roomCode || roomId.slice(-6)}</strong>
+          </Typography>
+          
+          <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Or share this link:
+            </Typography>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                wordBreak: 'break-all',
+                cursor: 'pointer',
+                '&:hover': { textDecoration: 'underline' }
+              }}
+              onClick={() => copyToClipboard(joinUrl)}
+            >
+              {joinUrl}
+            </Typography>
           </Box>
-        )}
-      </Box>
+
+          <Alert severity="info" sx={{ mt: 2, textAlign: 'left' }}>
+            <Typography variant="body2">
+              <strong>How to join:</strong>
+            </Typography>
+            <Typography variant="body2" component="div" sx={{ mt: 1 }}>
+              1. Scan QR code with phone camera<br/>
+              2. Tap the link that appears<br/>
+              3. You'll automatically join the room
+            </Typography>
+          </Alert>
+        </DialogContent>
+        
+        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+          <Button onClick={shareRoom} variant="outlined" startIcon={<Share />}>
+            Share
+          </Button>
+          <Button 
+            onClick={() => copyToClipboard(joinUrl)} 
+            variant="outlined" 
+            startIcon={<ContentCopy />}
+          >
+            Copy Link
+          </Button>
+          <Button onClick={() => setQrOpen(false)} variant="contained">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Snackbar for notifications */}
       <Snackbar

@@ -1,11 +1,9 @@
 import MultiplayerRoom from '../models/MultiplayerRoom.js';
 import { protect, authorize } from '../middleware/auth.js';
+import RoomParticipant from'../models/RoomParticipant.js';
 
-// @desc    Get all multiplayer rooms
-// @route   GET /api/rooms
-// @access  Private
 export const getAllRooms = [
-  protect,
+
   async (req, res) => {
     try {
       const rooms = await MultiplayerRoom.find()
@@ -65,37 +63,111 @@ export const getRoomById = [
   }
 ];
 
-export const getRoomByCode = [
-  protect,
-  async (req, res) => {
-    try {
-      const room = await MultiplayerRoom.findOne({ 
-        accesscode: req.params.code,
-        isActive: true 
-      })
-        .populate('qrCode')
-        .populate('participants');
+// join room
+export const joinRoom = async (req, res) => {
+  const { id: roomId } = req.params;
+  const playerId = req.user?.id; 
+  
+  console.log('Join room request:', { roomId, playerId, userExists: !!req.user });
+  
+  if (!roomId) {
+    return res.status(400).json({ 
+      success: false,
+      error: 'Room ID is required' 
+    });
+  }
+  
+  if (!playerId) {
+    return res.status(401).json({ 
+      success: false,
+      error: 'Authentication required - Player ID not found' 
+    });
+  }
 
-      if (!room) {
-        return res.status(404).json({
-          success: false,
-          message: 'Room not found or inactive'
-        });
-      }
-
-      res.status(200).json({
-        success: true,
-        data: room
-      });
-    } catch (error) {
-      res.status(500).json({
+  try {
+    const room = await MultiplayerRoom.findById(roomId);
+    if (!room) {
+      return res.status(404).json({ 
         success: false,
-        message: 'Server error',
-        error: error.message
+        error: 'Room not found' 
       });
     }
+
+    if (!room.isActive || room.roomStatus === 'closed') {
+      return res.status(403).json({ 
+        success: false,
+        error: 'Room is not accepting new players' 
+      });
+    }
+    
+    const participantsCount = await RoomParticipant.countDocuments({ roomId });
+    const maxPlayers = room.maxPlayers || 6;
+    
+    console.log('Room capacity:', { current: participantsCount, max: maxPlayers });
+    
+    if (participantsCount >= maxPlayers) {
+      return res.status(403).json({ 
+        success: false,
+        error: 'Room is full' 
+      });
+    }
+
+    const existingParticipant = await RoomParticipant.findOne({ roomId, playerId });
+    if (existingParticipant) {
+      console.log('Player already in room:', existingParticipant);
+      return res.status(200).json({
+        success: true,
+        message: 'Already in room',
+        data: {
+          participant: existingParticipant,
+          room
+        }
+      });
+    }
+
+    const newParticipant = await RoomParticipant.create({
+      roomId,
+      playerId,
+      joinedAt: new Date(),
+      isHost: participantsCount === 0, 
+      isReady: false,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Joined room successfully',
+      data: {
+        participant: newParticipant,
+        room
+      }
+    });
+
+  } catch (error) {
+    console.error('Join Room Error:', error);
+    
+    if (error.name === 'CastError') {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid room ID format' 
+      });
+    }
+    
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Validation error: ' + error.message 
+      });
+    }
+    
+    res.status(500).json({ 
+      success: false,
+      error: 'Server error while joining room',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
-];
+};
+
+
 
 export const createRoom = [
   protect,

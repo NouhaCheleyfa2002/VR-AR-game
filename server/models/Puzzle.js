@@ -22,6 +22,9 @@ const puzzleSchema = new mongoose.Schema({
   solution: {
     type: String
   },
+  points: {
+    type: Number
+  },
   scene: [
     {
       type: mongoose.Schema.Types.ObjectId,

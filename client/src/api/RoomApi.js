@@ -18,7 +18,8 @@ export const getAllRooms = async () => {
 export const getRoomById = async (id) => {
   try {
     const response = await axios.get(`${backendUrl}/rooms/${id}`);
-    return response.data.data || response.data || null;
+    const data = response.data.data || response.data || [];
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching room by ID:', error);
     throw error;
@@ -29,9 +30,33 @@ export const getRoomById = async (id) => {
 export const getRoomByCode = async (code) => {
   try {
     const response = await axios.get(`${backendUrl}/rooms/code/${code}`);
-    return response.data.data || response.data || null;
+    const data = response.data.data || response.data || [];
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching room by code:', error);
+    throw error;
+  }
+};
+
+
+// join a room
+export const joinRoom = async (roomId, token) => {
+  try {
+    
+    const response = await axios.post(
+      `${backendUrl}/rooms/${roomId}/join`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    return response.data.data; // { participant, room }
+
+  } catch (error) {
+    console.error('Error joining room:', error?.response?.data || error.message);
     throw error;
   }
 };
@@ -40,7 +65,8 @@ export const getRoomByCode = async (code) => {
 export const createRoom = async (data) => {
   try {
     const response = await axios.post(`${backendUrl}/rooms`, data);
-    return response.data.data || response.data;
+    const resdata = response.data.data || response.data || [];
+    return Array.isArray(resdata) ? resdata : [];
   } catch (error) {
     console.error('Error creating room:', error);
     throw error;
@@ -51,7 +77,8 @@ export const createRoom = async (data) => {
 export const updateRoom = async (id, data) => {
   try {
     const response = await axios.put(`${backendUrl}/rooms/${id}`, data);
-    return response.data.data || response.data;
+    const resdata = response.data.data || response.data || [];
+    return Array.isArray(resdata) ? resdata : [];
   } catch (error) {
     console.error('Error updating room:', error);
     throw error;
@@ -62,7 +89,8 @@ export const updateRoom = async (id, data) => {
 export const deleteRoom = async (id) => {
   try {
     const response = await axios.delete(`${backendUrl}/rooms/${id}`);
-    return response.data.data || response.data;
+    const resdata = response.data.data || response.data || [];
+    return Array.isArray(resdata) ? resdata : [];
   } catch (error) {
     console.error('Error deleting room:', error);
     throw error;

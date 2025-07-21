@@ -20,6 +20,7 @@ import {
   createEscapeGame,
   updateEscapeGame,
   deleteEscapeGame,
+  toggleEscapeGameActive
 } from '../../api/EscapeGameApi';
 import { toast } from 'react-toastify';
 
@@ -60,13 +61,12 @@ const ManageEscapeGamePage = () => {
       try {
         setLoading(true);
         setError(null);
-        console.log('Fetching games...'); // Debug log
+       
         const fetchedGames = await getAllEscapeGames();
-        console.log('Fetched games:', fetchedGames); // Debug log
         
         // Ensure we always have an array
         const gamesArray = Array.isArray(fetchedGames) ? fetchedGames : [];
-        console.log('Games array:', gamesArray); // Debug log
+
         setGames(gamesArray);
       } catch (error) {
         setError('Failed to fetch games');
@@ -145,6 +145,26 @@ const ManageEscapeGamePage = () => {
       toast.success('Game deleted.');
     } catch (err) {
       toast.error('Failed to delete game');
+      console.error(err);
+    }
+  };
+
+  const handleToggleStatus = async (game) => {
+    const confirmMsg = game.isActive
+      ? `Are you sure you want to deactivate "${game.title}"?`
+      : `Activate "${game.title}"?`;
+  
+    if (!window.confirm(confirmMsg)) return;
+  
+    try {
+      await toggleEscapeGameActive(game._id);
+      toast.success(`Game ${game.isActive ? 'deactivated' : 'activated'}.`);
+  
+      const refreshed = await getAllEscapeGames();
+      setGames(Array.isArray(refreshed) ? refreshed : []);
+    } catch (err) {
+      const msg = err?.response?.data?.message || 'Failed to update status';
+      toast.error(msg);
       console.error(err);
     }
   };
@@ -290,6 +310,9 @@ const ManageEscapeGamePage = () => {
               <div className="relative group border rounded-lg p-4 shadow hover:shadow-lg transition">
                 <EscapeGameCard game={game} />
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 flex gap-2">
+                  <Button size="small" variant="outlined" onClick={() => handleToggleStatus(game)}>
+                    status
+                  </Button>
                   <Button size="small" variant="outlined" onClick={() => handleEdit(game)}>
                     Edit
                   </Button>

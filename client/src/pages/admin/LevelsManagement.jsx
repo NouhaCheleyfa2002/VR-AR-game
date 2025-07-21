@@ -30,7 +30,7 @@ const ManageLevelPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLevel, setEditingLevel] = useState(null);
 
-  // Fetch levels from API
+
   useEffect(() => {
     fetchLevels();
   }, []);
@@ -84,7 +84,7 @@ const ManageLevelPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (level) => {
+/*const handleDelete = async (level) => {
     if (!window.confirm(`Are you sure you want to delete "${level.title}"?`)) return;
     
     try {
@@ -95,7 +95,7 @@ const ManageLevelPage = () => {
       console.error('Error deleting level:', error);
       toast.error('Failed to delete level');
     }
-  };
+  };*/
 
   const handleSave = (levelData) => {
     if (editingLevel) {
@@ -228,7 +228,6 @@ const ManageLevelPage = () => {
               key={level._id}
               level={level}
               onEdit={openEditModal}
-              onDelete={handleDelete}
               onLevelUpdate={handleLevelUpdate}
             />
           ))}

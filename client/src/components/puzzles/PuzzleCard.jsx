@@ -25,12 +25,15 @@ const PuzzleCard = ({ puzzle, onEdit }) => {
       }}
     >
       <CardContent sx={{ flexGrow: 1 }}>
+      <Typography variant="h6" component="h3" gutterBottom>
+          {puzzle.title}
+        </Typography>
         <Typography variant="h6" component="h3" gutterBottom>
           {puzzle.question}
         </Typography>
 
         <Typography variant="body2" color="text.secondary" gutterBottom>
-          ID: {puzzle.puzzleId}
+          puzzle ID: {puzzle._id}
         </Typography>
 
         <Chip

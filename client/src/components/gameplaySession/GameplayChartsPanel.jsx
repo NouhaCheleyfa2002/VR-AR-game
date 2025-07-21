@@ -52,7 +52,7 @@ const GameplayChartsPanel = ({ sessions = [] }) => {
   // Hints Used per Session (show only first 20 sessions for readability)
   const hintsData = sessions.slice(0, 20).map((s, i) => ({
     name: `Session ${i + 1}`,
-    hints: s.hintsUsed || 0,
+    hints: s.hintsUsed.length || 0,
   }));
 
   // Preferred Difficulty
@@ -79,7 +79,7 @@ const GameplayChartsPanel = ({ sessions = [] }) => {
   // Average Score Per Game
   const scoresPerGame = {};
   sessions.forEach((s) => {
-    const gameId = s.gameId || 'Unknown';
+    const gameId = s.gameId.title || 'Unknown';
     if (!scoresPerGame[gameId]) {
       scoresPerGame[gameId] = { total: 0, count: 0 };
     }
@@ -87,14 +87,14 @@ const GameplayChartsPanel = ({ sessions = [] }) => {
     scoresPerGame[gameId].count += 1;
   });
   const averageScoreData = Object.entries(scoresPerGame).map(([gameId, { total, count }]) => ({
-    gameId: gameId.length > 8 ? `${gameId.substring(0, 8)}...` : gameId,
+    gameId: gameId > 8 ? `${gameId.substring(0, 8)}...` : gameId,
     average: parseFloat((total / count).toFixed(1)),
   }));
 
   // Top-Performing Players
   const scoreByPlayer = {};
   sessions.forEach((s) => {
-    const player = s.playerId || 'Unknown';
+    const player = s.playerId.email || 'Unknown';
     scoreByPlayer[player] = (scoreByPlayer[player] || 0) + (s.totalScore || 0);
   });
   const topPlayers = Object.entries(scoreByPlayer)

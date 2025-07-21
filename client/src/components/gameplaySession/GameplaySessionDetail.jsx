@@ -69,16 +69,16 @@ const GameplaySessionDetail = ({ session }) => {
             <Grid item xs={12} sm={6}>
               <Typography variant="body2" color="text.secondary">Player ID</Typography>
               <Typography variant="body1" sx={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>
-                {formatValue(playerId)}
+                {formatValue(playerId._id)}
               </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <Typography variant="body2" color="text.secondary">Game ID</Typography>
-              <Typography variant="body1">{formatValue(gameId)}</Typography>
+              <Typography variant="body1">{formatValue(gameId._id)}</Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <Typography variant="body2" color="text.secondary">Room ID</Typography>
-              <Typography variant="body1">{formatValue(roomId)}</Typography>
+              <Typography variant="body1">{formatValue(roomId._id)}</Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <Typography variant="body2" color="text.secondary">Start Time</Typography>
@@ -113,7 +113,7 @@ const GameplaySessionDetail = ({ session }) => {
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <Chip 
-                    label={`Hints Used: ${formatValue(hintsUsed)}`} 
+                    label={`Hints Used: ${formatValue(hintsUsed.length)}`} 
                     color="warning" 
                     variant="outlined"
                     sx={{ width: '100%', justifyContent: 'flex-start' }}

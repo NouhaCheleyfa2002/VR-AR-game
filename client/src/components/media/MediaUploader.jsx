@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@mui/material';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
-import { getAcceptType } from '../../models/media.types';
+import { getAcceptType } from './MediaType';
 
 const MediaUploader = ({ type, onFilesSelected }) => {
   const handleFileChange = (e) => {

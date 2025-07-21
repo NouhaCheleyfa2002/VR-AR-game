@@ -21,12 +21,12 @@ puzzleRouter.get('/:id', getPuzzleById);
 puzzleRouter.get('/level/:levelId', getPuzzlesByLevelId);
 
 // POST /api/puzzles
-puzzleRouter.post('/',protect, authorize('admin'), createPuzzle);
+puzzleRouter.post('/', createPuzzle);
 
 // PUT /api/puzzles/:id
-puzzleRouter.put('/:id',protect, authorize('admin'), updatePuzzle);
+puzzleRouter.put('/:id', updatePuzzle);
 
 // DELETE /api/puzzles/:id
-puzzleRouter.delete('/:id',protect, authorize('admin'), deletePuzzle);
+puzzleRouter.delete('/:id', deletePuzzle);
 
 export default puzzleRouter;

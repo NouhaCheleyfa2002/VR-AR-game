@@ -31,10 +31,16 @@ export const getSessionById = async (id) => {
 // Get sessions by player ID
 export const getSessionsByPlayerId = async (playerId) => {
   try {
-    const response = await axios.get(`${backendUrl}/sessions/player/${playerId}`);
+    const token = localStorage.getItem('token');
+    
+    const response = await axios.get(`${backendUrl}/sessions/player/${playerId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     
     const data = response.data.data || response.data || [];
-    
+
     return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching sessions by player:', error);

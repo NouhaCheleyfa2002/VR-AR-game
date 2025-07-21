@@ -14,22 +14,22 @@ import {
 } from '../controllers/GameplaySession.js';
 
 
-sessionRouter.get('/', protect, authorize('admin'), getAllSessions);
+sessionRouter.get('/', getAllSessions);
 
 // Admin can view any session, players can only view their own
 sessionRouter.get('/:id', protect, getSessionById);
 
-sessionRouter.get('/player/:playerId', protect, getSessionsByPlayerId);
+sessionRouter.get('/player/:playerId',protect,  getSessionsByPlayerId);
 
-sessionRouter.get('/room/:roomId', protect, getSessionsByRoomId);
+sessionRouter.get('/room/:roomId', getSessionsByRoomId);
 
 //Players can create their own sessions(initialy)
-sessionRouter.post('/', protect, createSession);
+sessionRouter.post('/', createSession);
 
 // admins can update any
-sessionRouter.put('/:id', protect,authorize('admin'), updateSession);
+sessionRouter.put('/:id', updateSession);
 
 // Admin can delete any session
-sessionRouter.delete('/:id', protect,authorize('admin'), deleteSession);
+sessionRouter.delete('/:id', deleteSession);
 
 export default sessionRouter;

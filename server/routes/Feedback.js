@@ -12,9 +12,9 @@ import {
 
 feedbackRouter.get('/', getAllFeedbacks);
 
-feedbackRouter.get('/:id', protect,authorize('admin'), getFeedbackById);
+feedbackRouter.get('/:id', getFeedbackById);
 
-feedbackRouter.get('/player/:playerId',protect,authorize('admin'),  getFeedbacksByPlayer);
+feedbackRouter.get('/player/:playerId', getFeedbacksByPlayer);
 
 feedbackRouter.post('/', createFeedback);
 

@@ -13,14 +13,14 @@ import { Edit, Delete } from '@mui/icons-material';
 import { format } from 'date-fns';
 
 const FeedbackCard = ({ feedback, isAdmin = false, onEdit, onDelete }) => {
-  const { rating, comment, date, playerName } = feedback;
+  const { rating, comment, date, playerId } = feedback;
 
   return (
     <Card sx={{ borderRadius: 3, boxShadow: 3, p: 2 }}>
       <CardContent>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography variant="subtitle1" fontWeight="bold">
-            {playerName || 'Anonymous'}
+            {playerId.email || 'Anonymous'}
           </Typography>
           <Typography variant="caption" color="text.secondary">
             {format(new Date(date), 'PPpp')}

@@ -143,29 +143,29 @@ const GameplaySessionForm = ({ session, onSave, onCancel }) => {
         <TextField
           label="Player ID"
           name="playerId"
-          value={formData.playerId}
+          value={formData.playerId._id}
           onChange={handleChange}
           required
-          error={!!errors.playerId}
-          helperText={errors.playerId}
+          error={!!errors.playerId._id}
+          helperText={errors.playerId._id}
         />
         
         <TextField
           label="Room ID"
           name="roomId"
-          value={formData.roomId}
+          value={formData.roomId._id}
           onChange={handleChange}
-          error={!!errors.roomId}
-          helperText={errors.roomId}
+          error={!!errors.roomId._id}
+          helperText={errors.roomId._id}
         />
         
         <TextField
           label="Game ID"
           name="gameId"
-          value={formData.gameId}
+          value={formData.gameId._id}
           onChange={handleChange}
-          error={!!errors.gameId}
-          helperText={errors.gameId}
+          error={!!errors.gameId._id}
+          helperText={errors.gameId._id}
         />
         
         <TextField
@@ -206,10 +206,10 @@ const GameplaySessionForm = ({ session, onSave, onCancel }) => {
           label="Hints Used"
           name="hintsUsed"
           type="number"
-          value={formData.hintsUsed}
+          value={formData.hintsUsed.length}
           onChange={handleChange}
-          error={!!errors.hintsUsed}
-          helperText={errors.hintsUsed || "Cannot be negative"}
+          error={!!errors.hintsUsed.length}
+          helperText={errors.hintsUsed.length}
           inputProps={{ min: 0 }}
         />
 

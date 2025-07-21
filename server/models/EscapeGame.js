@@ -24,6 +24,9 @@ const escapeGameSchema = new mongoose.Schema({
   culturalContext: {
     type: String
   },
+  maxPlayers:{
+    type:Number
+  },
   scenarios: [
     {
       type: mongoose.Schema.Types.ObjectId,

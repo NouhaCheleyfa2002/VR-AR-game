@@ -1,4 +1,5 @@
 import { useState, useContext } from 'react';
+import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import * as yup from 'yup';
 import { toast, ToastContainer } from 'react-toastify';
@@ -12,7 +13,7 @@ const loginSchema = yup.object().shape({
 });
 
 const Login = () => {
-  const { login } = useContext(AuthContext);
+  const { backendUrl, login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -21,26 +22,38 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
+  
     try {
       await loginSchema.validate(formData, { abortEarly: false });
-
-      // Mock token and role
-      const mockToken = 'mock-jwt-token';
-      const user = {
-        email: formData.email,
-        username: formData.email.split('@')[0],
-        role: formData.email.includes('admin') ? 'admin' : 'player',
-      };
-
-      localStorage.setItem('token', mockToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      login({ token: mockToken, user });
-
+  
+      // Call real API
+      const response = await axios.post(
+        `${backendUrl}/users/login`,
+        formData
+      );
+  
+      // PROPERLY EXTRACT DATA FROM RESPONSE
+      const { user, token } = response.data.data; // Changed from response.data.data to response.data
+      
+      // Debugging logs (temporary)
+      console.log('API Response:', response.data);
+      console.log('Extracted user:', user);
+      console.log('Extracted token:', token);
+  
+      // Update context (this will handle storage automatically)
+      login({ token, user });
+      
       toast.success('Login successful!', { autoClose: 2000 });
-      setTimeout(() => navigate(user.role === 'admin' ? '/admin' : '/player'), 2500);
+      setTimeout(
+        () => navigate(user.role === 'admin' ? '/admin' : '/player'),
+        2000
+      );
     } catch (err) {
+      console.error('Login error:', err);
       if (err.name === 'ValidationError') {
-        err.inner.forEach(e => toast.error(e.message));
+        err.inner.forEach((e) => toast.error(e.message));
+      } else if (err.response && err.response.data) {
+        toast.error(err.response.data.message || 'Login failed');
       } else {
         toast.error('Login failed');
       }

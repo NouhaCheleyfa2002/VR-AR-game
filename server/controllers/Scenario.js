@@ -110,13 +110,14 @@ export const createScenario = async (req, res) => {
     const {
       gameId,
       title,
-      historicalTheme,
+      theme,
       targetAudience,
+      levels,
       isActive
     } = req.body;
 
     // Validate required fields
-    if (!gameId || !title || !historicalTheme) {
+    if (!gameId || !title || !theme) {
       return res.status(400).json({
         success: false,
         message: 'Please provide all required fields: gameId, title, historicalTheme'
@@ -136,8 +137,9 @@ export const createScenario = async (req, res) => {
     const scenario = await Scenario.create({
       gameId,
       title,
-      historicalTheme,
+      theme,
       targetAudience,
+      levels,
       isActive: isActive !== undefined ? isActive : true
     });
 
@@ -248,7 +250,7 @@ export const deleteScenario = async (req, res) => {
     }
 
     // Check if scenario has associated levels
-    if (scenario.levels && scenario.levels.length > 0) {
+    if (scenario.levels._id && scenario.levels._id.length > 0) {
       return res.status(400).json({
         success: false,
         message: 'Cannot delete scenario with associated levels. Please delete levels first.'

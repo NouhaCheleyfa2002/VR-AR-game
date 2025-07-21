@@ -19,6 +19,7 @@ const ScenarioCard = ({ scenario, onEdit, onDelete }) => {
       }}
     >
       <CardContent>
+      
         {/* Title */}
         <Typography variant="h6" fontWeight="bold" gutterBottom>
           {scenario.title}
@@ -28,7 +29,7 @@ const ScenarioCard = ({ scenario, onEdit, onDelete }) => {
         <Box display="flex" alignItems="center" gap={1} mb={1}>
           <HistoryEduIcon fontSize="small" color="primary" />
           <Typography variant="body2" color="text.secondary">
-            {scenario.historicalTheme}
+            {scenario.theme}
           </Typography>
         </Box>
 
@@ -37,6 +38,13 @@ const ScenarioCard = ({ scenario, onEdit, onDelete }) => {
           <GroupIcon fontSize="small" color="action" />
           <Typography variant="body2" color="text.secondary">
             {scenario.targetAudience}
+          </Typography>
+        </Box>
+      {/* levels */}
+      <Box display="flex" alignItems="center" gap={1} mb={1}>
+          
+          <Typography variant="body2"  color="text.secondary">
+            levels: {scenario.levels.length}
           </Typography>
         </Box>
 

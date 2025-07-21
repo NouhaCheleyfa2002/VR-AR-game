@@ -20,9 +20,9 @@ const roomParticipantSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  syncProgress: {
+  isHost: {
     type: Boolean,
-    default: false
+    default: false,
   }
 }, {
   timestamps: true

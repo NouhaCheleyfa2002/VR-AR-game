@@ -21,12 +21,12 @@ scenarioRouter.get('/:id', getScenarioById);
 scenarioRouter.get('/game/:gameId', getScenariosByGameId);
 
 // POST /api/scenarios
-scenarioRouter.post('/', protect, authorize('admin'), createScenario);
+scenarioRouter.post('/', createScenario);
 
 // PUT /api/scenarios/:id
-scenarioRouter.put('/:id', protect, authorize('admin'), updateScenario);
+scenarioRouter.put('/:id', updateScenario);
 
 // DELETE /api/scenarios/:id
-scenarioRouter.delete('/:id', protect, authorize('admin'), deleteScenario);
+scenarioRouter.delete('/:id', deleteScenario);
 
 export default scenarioRouter;

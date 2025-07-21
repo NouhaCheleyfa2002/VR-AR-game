@@ -21,12 +21,12 @@ levelRouter.get('/:id', getLevelById);
 levelRouter.get('/scenario/:scenarioId', getLevelsByScenarioId);
 
 // POST /api/levels
-levelRouter.post('/', protect, authorize('admin'), createLevel);
+levelRouter.post('/', createLevel);
 
 // PUT /api/levels/:id
-levelRouter.put('/:id', protect, authorize('admin'), updateLevel);
+levelRouter.put('/:id', updateLevel);
 
 // DELETE /api/levels/:id
-levelRouter.delete('/:id', protect, authorize('admin'), deleteLevel);
+levelRouter.delete('/:id', deleteLevel);
 
 export default levelRouter;

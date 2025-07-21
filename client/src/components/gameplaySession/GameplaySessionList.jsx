@@ -23,15 +23,15 @@ const GameplaySessionList = ({ sessions, onSelectSession }) => {
           <ListItem key={session._id} disablePadding>
             <ListItemButton onClick={() => onSelectSession(session)}>
               <ListItemText
-                primary={`Session ID: ${session._id}`}
+                primary={`Session ID: ${String(session._id)}`}
                 secondary={
                   <>
                     <Typography component="span" variant="body2" color="text.primary">
-                      Game ID: {session.gameId} | Room: {session.roomId}
+                      Game ID: {session.gameId._id} | Room: {session.roomId._id}
                     </Typography>
                     <br />
                     <Typography component="span" variant="body2" color="text.secondary">
-                      Score: {session.totalScore} | Hints Used: {session.hintsUsed}
+                      Score: {session.totalScore} | Hints Used:{session.hintsUsed.length}
                     </Typography>
                   </>
                 }

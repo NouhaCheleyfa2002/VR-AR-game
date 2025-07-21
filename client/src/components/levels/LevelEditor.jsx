@@ -268,7 +268,7 @@ const LevelEditor = ({ initialData = null, onSave, onCancel, scenarioId = null }
         <input
           type="text"
           name="scene"
-          value={levelData.scene}
+          value={levelData.scene.title}
           onChange={handleChange}
           placeholder="Scene ID will be linked here"
           className="w-full border px-3 py-2 rounded focus:ring-2 focus:ring-blue-300"

@@ -111,6 +111,7 @@ export const createEscapeGame = async (req, res) => {
       theme,
       estimatedDuration,
       isActive,
+      maxPlayers,
       culturalContext,
       scenarios
     } = req.body;
@@ -157,6 +158,7 @@ export const createEscapeGame = async (req, res) => {
       estimatedDuration,
       isActive: isActive || false,
       culturalContext,
+      maxPlayers,
       scenarios: scenarios || []
     });
 
@@ -189,6 +191,7 @@ export const updateEscapeGame = async (req, res) => {
       theme,
       estimatedDuration,
       isActive,
+      maxPlayers,
       culturalContext,
       scenarios
     } = req.body;
@@ -248,6 +251,7 @@ export const updateEscapeGame = async (req, res) => {
     if (estimatedDuration !== undefined) updateData.estimatedDuration = estimatedDuration;
     if (isActive !== undefined) updateData.isActive = isActive;
     if (culturalContext !== undefined) updateData.culturalContext = culturalContext;
+    if (maxPlayers !== undefined) updateData.maxPlayers = maxPlayers;
     if (scenarios !== undefined) updateData.scenarios = scenarios;
 
     const updatedGame = await EscapeGame.findByIdAndUpdate(
@@ -313,28 +317,7 @@ export const deleteEscapeGame = async (req, res) => {
   }
 };
 
-export const getEscapeGamesByTheme = async (req, res) => {
-  try {
-    const { theme } = req.params;
-    
-    const escapeGames = await EscapeGame.find({
-      theme: theme,
-      isActive: true
-    }).populate('scenarios', 'title description difficulty');
 
-    res.status(200).json({
-      success: true,
-      data: escapeGames,
-      count: escapeGames.length
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error while fetching escape games by theme',
-      error: error.message
-    });
-  }
-};
 
 export const toggleEscapeGameActive = async (req, res) => {
   try {

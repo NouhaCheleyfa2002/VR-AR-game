@@ -36,7 +36,6 @@ const ManageScenarioPage = () => {
   const [page, setPage] = useState(1);
   const pageSize = 4;
 
-  // Dynamic filter options based on actual data - using 'theme' instead of 'historicalTheme'
   const availableThemes = useMemo(() => {
     if (!Array.isArray(scenarios)) return [];
     return [...new Set(scenarios.map(s => s.theme).filter(Boolean))];
@@ -55,7 +54,8 @@ const ManageScenarioPage = () => {
         setError(null);
         const response = await getAllScenarios();
         // Ensure we're setting an array
-        setScenarios(Array.isArray(response.data) ? response.data : []);
+        setScenarios(response);
+        
       } catch (err) {
         setError('Failed to fetch scenarios');
         toast.error('Failed to fetch scenarios');
@@ -68,7 +68,6 @@ const ManageScenarioPage = () => {
     fetchScenarios();
   }, []);
 
-  // Filter scenarios based on search and filters - using 'theme' instead of 'historicalTheme'
   useEffect(() => {
     if (!Array.isArray(scenarios)) {
       setFilteredScenarios([]);
@@ -98,15 +97,17 @@ const ManageScenarioPage = () => {
     try {
       if (editingScenario) {
         await updateScenario(editingScenario._id, data);
+        
         toast.success('Scenario updated');
-      } else {
+      } else 
+      { 
         await createScenario(data);
         toast.success('Scenario added');
       }
 
       // Refresh scenarios list
       const response = await getAllScenarios();
-      setScenarios(Array.isArray(response.data) ? response.data : []);
+      setScenarios(response);
       
       setIsModalOpen(false);
       setEditingScenario(null);
@@ -120,7 +121,7 @@ const ManageScenarioPage = () => {
     if (window.confirm(`Are you sure you want to delete "${scenario.title}"?`)) {
       try {
         await deleteScenario(scenario._id);
-        setScenarios(prev => Array.isArray(prev) ? prev.filter(s => s._id !== scenario._id) : []);
+        setScenarios(prev => prev ? prev.filter(s => s._id !== scenario._id) : []);
         toast.success('Scenario deleted');
       } catch (err) {
         toast.error('Failed to delete scenario');

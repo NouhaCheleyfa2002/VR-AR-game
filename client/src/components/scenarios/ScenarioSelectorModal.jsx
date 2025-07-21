@@ -65,7 +65,7 @@ const ScenarioSelectorModal = ({
                       <strong>Levels:</strong>
                       <ul className="list-disc list-inside">
                         {scenario.levels.map(level => (
-                          <li key={level.levelId || level._id}>{level.title}</li>
+                          <li key={level._id || level._id}>{level.title}</li>
                         ))}
                       </ul>
                     </div>

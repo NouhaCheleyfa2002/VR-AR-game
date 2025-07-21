@@ -42,13 +42,13 @@ const LevelCard = ({ level, onEdit, onDelete, onLevelUpdate }) => {
   }, [level.puzzle]);
 
   // Fetch puzzle details using the API service
-  const fetchPuzzle = async (puzzleId) => {
-    if (!puzzleId) return;
+  const fetchPuzzle = async (puzzle) => {
+    if (!puzzle) return ;
     
     try {
       setLoading(true);
       setError(null);
-      const puzzleData = await getPuzzleById(puzzleId);
+      const puzzleData = await getPuzzleById(puzzle._id);
       setPuzzle(puzzleData);
     } catch (err) {
       setError(err.message);
@@ -98,6 +98,7 @@ const LevelCard = ({ level, onEdit, onDelete, onLevelUpdate }) => {
       if (onDelete) {
         onDelete(level);
       }
+      window.location.reload();
     } catch (err) {
       setError(err.message);
       console.error('Error deleting level:', err);
@@ -112,47 +113,33 @@ const LevelCard = ({ level, onEdit, onDelete, onLevelUpdate }) => {
     try {
       setLoading(true);
       setError(null);
-      
-      const newPuzzleData = {
-        title: `Puzzle for ${level.title}`,
-        question: '',
-        solution: '',
-        difficulty: level.difficulty,
-        type: 'multiple_choice', // Default type, adjust as needed
-        options: [], // Default empty options
-        hints: [], // Default empty hints
-        explanation: '',
-        timeLimit: 60, // Default time limit
-        points: 10, // Default points
-        // Add other default fields as needed based on your puzzle schema
-      };
-      
-      const createdPuzzle = await createPuzzle(newPuzzleData);
-      
-      // Update the level to reference the new puzzle
-      const updatedLevelData = {
-        ...level,
-        puzzle: createdPuzzle._id,
-      };
-      
-      await updateLevel(level._id, updatedLevelData);
-      
-      setPuzzle(createdPuzzle);
-      setEditingPuzzle(createdPuzzle);
-      toast.success('Puzzle created successfully');
-      
-      // Optionally trigger a refresh of the level data
-      if (onLevelUpdate) {
-        onLevelUpdate(level._id);
+  
+      const createdPuzzle = await createPuzzle(puzzle); // just send puzzle directly
+  
+      if (createdPuzzle?._id) {
+        await updateLevel(level._id, {
+          puzzle: createdPuzzle._id,
+        });
+  
+        setPuzzle(createdPuzzle);
+        setEditingPuzzle(createdPuzzle);
+        toast.success('Puzzle created successfully');
+  
+        if (onLevelUpdate) {
+          onLevelUpdate(level._id);
+        }
+      } else {
+        throw new Error('Puzzle creation failed: No ID returned.');
       }
     } catch (err) {
-      setError(err.message);
       console.error('Error creating puzzle:', err);
+      setError(err.message || 'An error occurred');
       toast.error('Failed to create puzzle');
     } finally {
       setLoading(false);
     }
   };
+  
 
   // Remove puzzle from level
   const handleRemovePuzzle = async () => {
@@ -187,7 +174,7 @@ const LevelCard = ({ level, onEdit, onDelete, onLevelUpdate }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow p-5 hover:shadow-md border border-gray-200 space-y-2 transition">
+    <div className="bg-white rounded-xl shadow p-5 hover:shadow-md border border-gray-200 space-y-2 transition ">
       {error && (
         <div className="bg-red-50 border border-red-200 rounded p-2 text-red-700 text-sm">
           Error: {error}
@@ -223,46 +210,48 @@ const LevelCard = ({ level, onEdit, onDelete, onLevelUpdate }) => {
         </div>
       )}
 
-      <div className="flex justify-between text-sm text-gray-600 mt-2">
-        <div className="flex gap-4">
-          <span className="flex items-center gap-1">
-            <FaClock className="text-blue-500" />
-            {level.timeLimit} min
-          </span>
-          <button
-            onClick={() => setManagePuzzleOpen(true)}
-            className="flex items-center gap-1 text-blue-600 hover:underline"
-            disabled={loading}
-          >
-            <FaPuzzlePiece className="text-blue-500" />
-            {loading ? 'Loading...' : puzzle ? '1 puzzle' : 'No puzzle'}
-          </button>
-          {level.scene && (
-            <span className="text-purple-600">
-              Scene: {level.scene}
+      <div className="p-4 border rounded-md bg-white">
+        <div className="flex justify-between items-start text-sm text-gray-600">
+          <div className="flex flex-wrap gap-4">
+            <span className="flex items-center gap-1">
+              <FaClock className="text-blue-500" />
+              {level.timeLimit} min
             </span>
-          )}
-        </div>
-
-        <div className="flex gap-2">
-          {onEdit && (
             <button
-              onClick={() => onEdit(level)}
-              title="Edit"
-              className="text-blue-600 hover:text-blue-800"
+              onClick={() => setManagePuzzleOpen(true)}
+              className="flex items-center gap-1 text-blue-600 hover:underline"
               disabled={loading}
             >
-              <MdEdit size={18} />
+              <FaPuzzlePiece className="text-blue-500" />
+              {loading ? 'Loading...' : puzzle ? '1 puzzle' : 'No puzzle'}
             </button>
-          )}
-          <button
-            onClick={handleDelete}
-            title="Delete"
-            className="text-red-600 hover:text-red-800"
-            disabled={loading}
-          >
-            <MdDelete size={18} />
-          </button>
+            {level.scene.title && (
+              <span className="text-purple-600">
+                Scene: {level.scene.title}
+              </span>
+            )}
+          </div>
+
+          <div className="flex gap-2 mt-1">
+            {onEdit && (
+              <button
+                onClick={() => onEdit(level)}
+                title="Edit"
+                className="text-blue-600 hover:text-blue-800"
+                disabled={loading}
+              >
+                <MdEdit size={18} />
+              </button>
+            )}
+            <button
+              onClick={handleDelete}
+              title="Delete"
+              className="text-red-600 hover:text-red-800"
+              disabled={loading}
+            >
+              <MdDelete size={18} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -290,7 +279,7 @@ const LevelCard = ({ level, onEdit, onDelete, onLevelUpdate }) => {
             <div className="border rounded p-4 hover:bg-gray-50">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <p className="font-semibold mb-2">{puzzle.title || puzzle.question || 'Untitled Puzzle'}</p>
+                  <p className="font-semibold mb-2">{level.puzzle.title || level.puzzle.question || 'Untitled Puzzle'}</p>
                   <p className="text-sm text-gray-600 mb-1">
                     <strong>Question:</strong> {puzzle.question || 'No question set'}
                   </p>

@@ -382,14 +382,6 @@ export const deleteSession = async (req, res) => {
       });
     }
 
-    // Check if user can delete this session
-    if (req.user.role !== 'admin' && session.playerId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. You can only delete your own sessions.'
-      });
-    }
-
     await GameplaySession.findByIdAndDelete(id);
 
     res.status(200).json({

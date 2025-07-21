@@ -2,12 +2,11 @@ import axios from 'axios';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-
 export const getAllPuzzles = async () => {
   try {
     const response = await axios.get(`${backendUrl}/puzzles`);
     const data = response.data.data || response.data || [];
-  
+    
     return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching puzzles:', error);
@@ -27,6 +26,7 @@ export const getPuzzleById = async (id) => {
 
 export const getPuzzlesByLevelId = async (levelId) => {
   try {
+    // Fix: use levelId directly, not levelId._id
     const response = await axios.get(`${backendUrl}/puzzles/level/${levelId}`);
     
     const data = response.data.data || response.data || []; 
@@ -40,9 +40,11 @@ export const getPuzzlesByLevelId = async (levelId) => {
 
 export const createPuzzle = async (data) => {
   try {
-    const response = await axios.post(`${backendUrl}/puzzles`, data
-    );
-    return response.data.data || response.data;
+    const response = await axios.post(`${backendUrl}/puzzles`, data);
+    const resdata = response.data.data || response.data;
+    console.log("resdta", resdata);
+    
+    return resdata; 
   } catch (error) {
     console.error('Error creating puzzle:', error);
     throw error;
@@ -52,7 +54,10 @@ export const createPuzzle = async (data) => {
 export const updatePuzzle = async (id, data) => {
   try {
     const response = await axios.put(`${backendUrl}/puzzles/${id}`, data);
-    return response.data.data || response.data;
+    
+    const resdata = response.data.data || response.data;
+    
+    return resdata; 
   } catch (error) {
     console.error('Error updating puzzle:', error);
     throw error;
@@ -68,4 +73,3 @@ export const deletePuzzle = async (id) => {
     throw error;
   }
 };
-

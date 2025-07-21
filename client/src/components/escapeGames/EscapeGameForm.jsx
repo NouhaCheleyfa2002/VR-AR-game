@@ -36,7 +36,9 @@ const EscapeGameForm = ({ onSubmit, initialData }) => { // Added initialData pro
         estimatedDuration: initialData.estimatedDuration || 30,
         isActive: initialData.isActive ?? true,
         culturalContext: initialData.culturalContext || '',
-        scenarios: initialData.scenarios || [],
+        scenarios: Array.isArray(initialData.scenarios) 
+        ? initialData.scenarios.map(s => typeof s === 'string' ? s : s._id)
+        : [],
       });
     }
   }, [initialData]); // Added initialData as dependency
@@ -51,7 +53,7 @@ const EscapeGameForm = ({ onSubmit, initialData }) => { // Added initialData pro
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!gameData.title || !gameData.description || !gameData.theme || !gameData.culturalContext) {
+    if (!gameData.title || !gameData.description || !gameData.theme || !gameData.culturalContext || !gameData.maxPlayers || !gameData.scenarios.length) {
       toast.error('Please fill all required fields.');
       return;
     }
@@ -66,7 +68,7 @@ const EscapeGameForm = ({ onSubmit, initialData }) => { // Added initialData pro
     const fetchScenarios = async () => {
       try {
         const res = await getAllScenarios();
-        setAllScenarios(res.data);
+        setAllScenarios(res);
       } catch (error) {
         toast.error('Failed to fetch scenarios');
         console.error(error);
@@ -79,19 +81,25 @@ const EscapeGameForm = ({ onSubmit, initialData }) => { // Added initialData pro
   useEffect(() => {
     const fetchGameAttributes = async () => {
       try {
-        const { data } = await getAllEscapeGames();
-  
-        const themes = [...new Set(data.map(g => g.theme).filter(Boolean))];
-        const contexts = [...new Set(data.map(g => g.culturalContext).filter(Boolean))];
-  
-        setAvailableThemes(themes);
-        setAvailableContexts(contexts);
+        const response = await getAllEscapeGames();
+        
+        const games = response || '';
+        
+        if (Array.isArray(games)) {
+          const themes = [...new Set(games.map(g => g.theme).filter(Boolean))];
+          const contexts = [...new Set(games.map(g => g.culturalContext).filter(Boolean))];
+          
+          setAvailableThemes(themes);
+          setAvailableContexts(contexts);
+        } else {
+          console.error('Expected array but got:', typeof games, games);
+        }
       } catch (err) {
         toast.error('Failed to fetch themes and contexts');
         console.error(err);
       }
     };
-  
+    
     fetchGameAttributes();
   }, []);
 
