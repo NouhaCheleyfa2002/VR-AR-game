@@ -2,8 +2,8 @@ import React from 'react';
 import ImageViewer from './ImageViewer';
 import VideoViewer from './VideoViewer';
 import AudioViewer from './AudioViewer';
-import ARPreviewer from './ARPreviewer';
-import VRPreviewer from './VRPreviewer';
+import ARPreviewer from './ARPreview';
+import VRPreviewer from './VRPreview';
 
 const MediaViewer = ({ media }) => {
   switch (media.type) {

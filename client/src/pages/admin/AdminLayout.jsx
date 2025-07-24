@@ -92,7 +92,7 @@ const AdminLayout = () => {
       <CssBaseline />
       <AppBar
         position="fixed"
-        sx={{ zIndex: theme => theme.zIndex.drawer + 1 }}
+        sx={{ zIndex: theme => theme.zIndex.drawer + 1, backgroundColor: '#003049' }}
       >
         <Toolbar>
           <IconButton
@@ -106,7 +106,7 @@ const AdminLayout = () => {
           <Typography variant="h6" noWrap component="div" paddingRight={130} >
             Admin Dashboard
           </Typography>
-          <button onClick={handleLogout} className='text-blue-600'>Logout</button>
+          <button onClick={handleLogout} className='text-blue-950'>Logout</button>
         </Toolbar>
        
       </AppBar>
@@ -117,7 +117,8 @@ const AdminLayout = () => {
         sx={{
           width: drawerWidth,
           flexShrink: 0,
-          [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
+          [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box',  backgroundColor: '#003049',
+            color: 'white' },
           display: { xs: 'none', sm: 'block' },
         }}
         open
@@ -147,6 +148,8 @@ const AdminLayout = () => {
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           mt: 8,
+          backgroundColor: '#f1faee', 
+          minHeight: '100vh',
         }}
       >
         <Outlet />

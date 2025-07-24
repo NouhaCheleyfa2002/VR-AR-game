@@ -108,37 +108,58 @@ const LevelCard = ({ level, onEdit, onDelete, onLevelUpdate }) => {
     }
   };
 
-  // Create new puzzle for this level using the API service
-  const handleCreatePuzzle = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-  
-      const createdPuzzle = await createPuzzle(puzzle); // just send puzzle directly
-  
-      if (createdPuzzle?._id) {
-        await updateLevel(level._id, {
-          puzzle: createdPuzzle._id,
-        });
-  
-        setPuzzle(createdPuzzle);
-        setEditingPuzzle(createdPuzzle);
-        toast.success('Puzzle created successfully');
-  
-        if (onLevelUpdate) {
-          onLevelUpdate(level._id);
-        }
-      } else {
-        throw new Error('Puzzle creation failed: No ID returned.');
+// Create new puzzle for this level using the API service
+const handleCreatePuzzle = async () => {
+  try {
+    setLoading(true);
+    setError(null);
+
+    // Create a new puzzle object with the required structure
+    const newPuzzleData = {
+      levelId: level._id, // Associate with this level
+      title: `Puzzle for ${level.title}`, // Default title
+      question: "Enter your puzzle question here", // Default question
+      difficulty: level.difficulty || "Easy", // Use level's difficulty or default
+      solution: "Enter the solution here", // Default solution
+      scene: [], // Empty array for scenes
+      hints: [], // Empty array for hints
+      points: 10 // Default points
+    };
+
+    console.log("Creating puzzle with data:", newPuzzleData); // Debug log
+
+    const createdPuzzle = await createPuzzle(newPuzzleData);
+
+    if (createdPuzzle?._id) {
+      // Update the level to reference the new puzzle
+      await updateLevel(level._id, {
+        puzzle: createdPuzzle._id,
+      });
+
+      setPuzzle(createdPuzzle);
+      setEditingPuzzle(createdPuzzle); // Open editor immediately
+      toast.success('Puzzle created successfully');
+
+      if (onLevelUpdate) {
+        onLevelUpdate(level._id);
       }
-    } catch (err) {
-      console.error('Error creating puzzle:', err);
-      setError(err.message || 'An error occurred');
-      toast.error('Failed to create puzzle');
-    } finally {
-      setLoading(false);
+    } else {
+      throw new Error('Puzzle creation failed: No ID returned.');
     }
-  };
+  } catch (err) {
+    console.error('Error creating puzzle:', err);
+    // Log server response details for debugging
+    if (err.response?.data) {
+      console.error('Server error details:', err.response.data);
+      setError(err.response.data.message || err.message);
+    } else {
+      setError(err.message || 'An error occurred');
+    }
+    toast.error('Failed to create puzzle');
+  } finally {
+    setLoading(false);
+  }
+};
   
 
   // Remove puzzle from level
@@ -279,7 +300,7 @@ const LevelCard = ({ level, onEdit, onDelete, onLevelUpdate }) => {
             <div className="border rounded p-4 hover:bg-gray-50">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <p className="font-semibold mb-2">{level.puzzle.title || level.puzzle.question || 'Untitled Puzzle'}</p>
+                  <p className="font-semibold mb-2">{puzzle.title || puzzle.question || 'Untitled Puzzle'}</p>
                   <p className="text-sm text-gray-600 mb-1">
                     <strong>Question:</strong> {puzzle.question || 'No question set'}
                   </p>
@@ -289,9 +310,8 @@ const LevelCard = ({ level, onEdit, onDelete, onLevelUpdate }) => {
                   <p className="text-sm text-gray-600 capitalize mb-1">
                     <strong>Difficulty:</strong> {puzzle.difficulty}
                   </p>
-                  <p className="text-sm text-gray-600">
-                    <strong>Type:</strong> {puzzle.type || 'Not specified'}
-                  </p>
+                  
+                  
                 </div>
                 <div className="flex gap-2 ml-4">
                   <button

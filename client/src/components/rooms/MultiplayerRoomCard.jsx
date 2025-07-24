@@ -38,13 +38,14 @@ const MultiplayerRoomCard = ({ room, onDeleteRoom, showActions = false }) => {
         return 'bg-gray-100 text-gray-500';
     }
   };
+console.log(room.gameId);
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow p-5 mb-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-xl font-semibold text-gray-800">
-          Room #{room.roomId || room.id}
+          Room #{room.roomId || room._id}
         </h2>
         <div className="flex items-center space-x-2">
           <div
@@ -57,7 +58,7 @@ const MultiplayerRoomCard = ({ room, onDeleteRoom, showActions = false }) => {
           {showActions && (
             <div className="flex space-x-1">
               <button
-                onClick={() => onDeleteRoom(room.roomId || room.id)}
+                onClick={() => onDeleteRoom(room.roomId || room._id)}
                 className="p-1 text-red-500 hover:bg-red-50 rounded"
                 title="Delete Room"
               >
@@ -80,7 +81,7 @@ const MultiplayerRoomCard = ({ room, onDeleteRoom, showActions = false }) => {
           <Users className="w-4 h-4 text-indigo-500" />
           <span>Players:</span>
           <span className="font-medium text-gray-900">
-            {room.participants?.length || 0} / {room.maxPlayer || room.maxPlayers || 'N/A'}
+            {room.participants?.length || 0} / { room.maxPlayers || 'N/A'}
           </span>
         </div>
         

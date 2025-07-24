@@ -28,6 +28,7 @@ import ManagePuzzlePage from './pages/admin/PuzzlesManagement';
 import MediaLibraryManagement from './pages/admin/MediaLibraryManagement';
 import ReportPage from './pages/admin/ReportPage';
 import QRCodeManagerPage from './pages/admin/QRCodeManagement';
+import VrPreviewer from './components/media/VRPreview';
 
 
 function App() {
@@ -48,7 +49,7 @@ function App() {
             <Route path="/player/rooms/:roomId" element={<PlayerRoomPage />} />
             <Route path="/player/rooms/:roomId/join" element={<JoinRoomPage />} />
            
-           
+            <Route path="/player/vr" element={< VrPreviewer/>} />
             <Route path="/player/invitations" element={<PlayerInvitationPage />} />
           </Route>
         </Route>

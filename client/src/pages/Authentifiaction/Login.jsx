@@ -33,7 +33,7 @@ const Login = () => {
       );
   
       // PROPERLY EXTRACT DATA FROM RESPONSE
-      const { user, token } = response.data.data; // Changed from response.data.data to response.data
+      const { user, token } = response.data.data; 
       
       // Debugging logs (temporary)
       console.log('API Response:', response.data);

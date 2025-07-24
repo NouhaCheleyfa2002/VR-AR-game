@@ -14,71 +14,63 @@ export const getAllRooms = async () => {
   }
 };
 
-// GET room by ID
+// GET room by ID - FIXED
 export const getRoomById = async (id) => {
   try {
     const response = await axios.get(`${backendUrl}/rooms/${id}`);
-    const data = response.data.data || response.data || [];
-    return Array.isArray(data) ? data : [];
+    // Return the actual room object, not force it to be an array
+    return response.data.data || response.data;
   } catch (error) {
     console.error('Error fetching room by ID:', error);
     throw error;
   }
 };
 
-// GET room by code (e.g., when scanning QR)
+// GET room by code (e.g., when scanning QR) - FIXED
 export const getRoomByCode = async (code) => {
   try {
     const response = await axios.get(`${backendUrl}/rooms/code/${code}`);
-    const data = response.data.data || response.data || [];
-    return Array.isArray(data) ? data : [];
+    // Return the actual room object, not force it to be an array
+    return response.data.data || response.data;
   } catch (error) {
     console.error('Error fetching room by code:', error);
     throw error;
   }
 };
 
-
 // join a room
-export const joinRoom = async (roomId, token) => {
+export const joinRoom = async (roomId) => {
   try {
-    
     const response = await axios.post(
-      `${backendUrl}/rooms/${roomId}/join`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
+      `${backendUrl}/rooms/${roomId}/join`
     );
 
-    return response.data.data; // { participant, room }
-
+    return response.data.data; 
+  
   } catch (error) {
     console.error('Error joining room:', error?.response?.data || error.message);
     throw error;
   }
 };
 
-// POST create a room
+// POST create a room - FIXED
 export const createRoom = async (data) => {
   try {
     const response = await axios.post(`${backendUrl}/rooms`, data);
-    const resdata = response.data.data || response.data || [];
-    return Array.isArray(resdata) ? resdata : [];
+    // Return the actual room object, not force it to be an array
+    return response.data.data || response.data;
   } catch (error) {
     console.error('Error creating room:', error);
     throw error;
   }
 };
 
-// PUT update a room
+// PUT update a room - FIXED
 export const updateRoom = async (id, data) => {
   try {
     const response = await axios.put(`${backendUrl}/rooms/${id}`, data);
-    const resdata = response.data.data || response.data || [];
-    return Array.isArray(resdata) ? resdata : [];
+    // Return the actual room object, not force it to be an array
+    return response.data.data || response.data;
   } catch (error) {
     console.error('Error updating room:', error);
     throw error;

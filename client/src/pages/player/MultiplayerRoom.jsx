@@ -15,6 +15,7 @@ import {
   Chip
 } from '@mui/material';
 import QRCode from 'react-qr-code';
+import { QrCode as QrCodeIcon } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Share, ContentCopy } from '@mui/icons-material';
 import MultiplayerRoomCard from '../../components/rooms/MultiplayerRoomCard';
@@ -32,6 +33,7 @@ const PlayerRoomPage = () => {
     joinRoom
   } = useRoom();
 
+  
   const [updating, setUpdating] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [pollingInterval, setPollingInterval] = useState(null);
@@ -85,12 +87,11 @@ const PlayerRoomPage = () => {
   };
 
   const fetchRoomData = async () => {
-    if (!room || !participant) return;
-
+    if (!room || !participant) return
+    
     try {
-      const roomData = await getRoomById(room._id || room.roomId);
-
-      if (!roomData) {
+      
+      if (!room) {
         setSnackbar({
           open: true,
           message: 'Room no longer exists',
@@ -100,11 +101,7 @@ const PlayerRoomPage = () => {
         return;
       }
 
-      const currentParticipant = roomData.participants?.find(
-        p => p.participantId === participant.participantId
-      );
-      
-      if (!currentParticipant) {
+      if (!participant) {
         setSnackbar({
           open: true,
           message: 'You have been removed from the room',
@@ -251,11 +248,12 @@ const PlayerRoomPage = () => {
   const allReady = room.participants?.every((p) => p.isReady) || false;
   const joinUrl = `${window.location.origin}/player/rooms/${roomId}/join`;
 
+
   return (
     <Container sx={{ mt: 4 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h4" gutterBottom>
-          Multiplayer Room
+         
         </Typography>
         <Button color="error" variant="outlined" onClick={handleLeaveRoom} size="small">
           Leave Room
@@ -263,7 +261,9 @@ const PlayerRoomPage = () => {
       </Box>
 
       <MultiplayerRoomCard room={{ ...room, participants: room.participants }} />
-
+ 
+   
+    
       <Box mt={3}>
         <ParticipantList
           participants={room.participants || []}
@@ -289,7 +289,7 @@ const PlayerRoomPage = () => {
               <Button 
                 variant="outlined" 
                 onClick={() => setQrOpen(true)}
-                startIcon={<QRCode size={20} />}
+                startIcon={<QrCodeIcon fontSize="small" />}
               >
                 Show QR Code
               </Button>
@@ -313,15 +313,20 @@ const PlayerRoomPage = () => {
             </Box>
 
             <Box>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Room Code: 
-                <Chip 
-                  label={room.roomCode || roomId.slice(-6)} 
-                  size="small" 
-                  sx={{ ml: 1 }}
-                  onClick={() => copyToClipboard(room.roomCode || roomId.slice(-6))}
-                />
-              </Typography>
+            <Typography
+              component="div" 
+              variant="body2"
+              color="text.secondary"
+              gutterBottom
+            >
+              Room Code:
+              <Chip 
+                label={room.roomCode || roomId.slice(-6)} 
+                size="small" 
+                sx={{ ml: 1 }}
+                onClick={() => copyToClipboard(room.roomCode || roomId.slice(-6))}
+              />
+            </Typography>
             </Box>
           </Paper>
 

@@ -15,6 +15,7 @@
     "@mui/icons-material": "^7.2.0",
     "@mui/material": "^7.2.0",
     "@mui/x-data-grid": "^8.7.0",
+    "three": "^0.178.0",
     "@react-three/fiber": "^9.2.0",
     "@react-three/xr": "^6.6.20",
     "@yudiel/react-qr-scanner": "^2.3.1",
@@ -32,7 +33,6 @@
     "react-router-dom": "^7.6.3",
     "react-toastify": "^11.0.5",
     "recharts": "^3.0.2",
-    "three": "^0.178.0",
     "uuid": "^11.1.0",
     "x-data-grid": "^2.1.0",
     "yup": "^1.6.1"

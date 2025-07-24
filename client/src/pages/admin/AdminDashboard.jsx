@@ -153,7 +153,7 @@ const AdminDashboard = () => {
             <CardHeader
               title="Latest Feedbacks"
               action={
-                <FormControl size="small" sx={{ minWidth: 120 }}>
+                <FormControl size="small" sx={{ minWidth: 120,  }}>
                   <InputLabel>Filter by</InputLabel>
                   <Select
                     value={filter}
@@ -172,7 +172,7 @@ const AdminDashboard = () => {
               {filteredFeedbacks.slice(0, 5).map(fb => (
                 <Box key={fb.feedbackId} mb={2} pb={1} borderBottom="1px solid #eee">
                   <Typography variant="subtitle2">
-                    {fb.playerName || 'Anonymous'} – {' '}
+                    {fb.playerId.email || 'Anonymous'} – {' '}
                     {[...Array(5)].map((_, i) => (i < fb.rating ? '⭐' : '☆'))}
                   </Typography>
                   <Tooltip title={fb.comment} arrow>
@@ -181,7 +181,7 @@ const AdminDashboard = () => {
                     </Typography>
                   </Tooltip>
                   <Typography variant="caption" color="text.disabled">
-                    {new Date(fb.date).toLocaleDateString()}
+                    {new Date(fb.createdAt).toLocaleDateString()}
                   </Typography>
                 </Box>
               ))}

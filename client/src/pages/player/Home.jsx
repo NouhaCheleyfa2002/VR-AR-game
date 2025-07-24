@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { useRoom } from '../../context/RoomContext';
-import  {QrScanner}  from '@yudiel/react-qr-scanner';
+
 import {
   Box,
   Grid,
@@ -41,11 +41,11 @@ import GamepadIcon from '@mui/icons-material/SportsEsports';
 import StarIcon from '@mui/icons-material/Star';
 import LogoutIcon from '@mui/icons-material/Logout';
 import CloseIcon from '@mui/icons-material/Close';
-
 import { getAllUsers, getUserScore } from '../../api/UserApi';
 import { getSessionsByPlayerId } from '../../api/GameplaySession';
 import { getAllInvitations } from '../../api/Invitation';
 import { getAllRooms, joinRoom } from '../../api/RoomApi';
+import { BrowserQRCodeReader } from '@zxing/library';
 
 // Custom styled components for gaming theme
 const GamingCard = styled(Card)(({ theme }) => ({
@@ -139,6 +139,7 @@ const ScannerOverlay = styled(Box)({
   },
 });
 
+
 const Home = () => {
   const navigate = useNavigate();
   const { logout, user, token } = useContext(AuthContext);
@@ -157,12 +158,102 @@ const Home = () => {
   
   // QR Scanner states
   const [scannerOpen, setScannerOpen] = useState(false);
-  const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState('');
+  const videoRef = useRef(null);
+  const codeReaderRef = useRef(null);
+
   
   // Tab states
   const [tab, setTab] = useState(0);
   const [partnerTab, setPartnerTab] = useState(0);
+
+  const openScanner = async () => {
+    try {
+      setScannerOpen(true);
+      setScanError('');
+      
+      // Initialize camera immediately when opening scanner
+      await initializeCamera();
+    } catch (error) {
+      console.error('Scanner error:', error);
+      setSnackbar({
+        open: true,
+        message: error.message || 'Failed to initialize scanner',
+        severity: 'error'
+      });
+      setScannerOpen(false); // Close scanner if initialization fails
+    }
+  };
+
+  const initializeCamera = async () => {
+    try {
+      // Request camera permission and get stream
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      });
+  
+      // Wait for video element to be available
+      if (!videoRef.current) {
+        throw new Error('Video element not available');
+      }
+  
+      // Set video source and play
+      videoRef.current.srcObject = stream;
+      await videoRef.current.play();
+  
+      // Initialize QR code reader
+      codeReaderRef.current = new BrowserQRCodeReader();
+      
+      // Start continuous scanning
+      startScanning();
+      
+    } catch (err) {
+      console.error('Camera initialization error:', err);
+      setScanError(`Camera access failed: ${err.message}`);
+      throw err;
+    }
+  };
+
+  const startScanning = () => {
+    if (!codeReaderRef.current || !videoRef.current) return;
+  
+    // Use decodeFromVideoDevice for continuous scanning
+    codeReaderRef.current.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
+      if (result) {
+        handleQRCodeDetected(result.getText());
+      }
+      if (error) {
+        const errorMessage = error.message || error.toString() || 'Unknown scanning error';
+        // Only show errors that aren't about "no QR code found"
+        if (!errorMessage.includes('No QR code found') && !errorMessage.includes('NotFoundException')) {
+          console.error('QR scanning error:', error);
+          setScanError(errorMessage);
+        }
+      }
+    });
+  };
+  
+  const closeScanner = () => {
+    // Stop video stream
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks();
+      tracks.forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    
+    // Reset QR code reader
+    if (codeReaderRef.current) {
+      codeReaderRef.current.reset();
+      codeReaderRef.current = null;
+    }
+    
+    setScannerOpen(false);
+    setScanError('');
+  };
 
   // Fetch all data on component mount
   useEffect(() => {
@@ -176,12 +267,20 @@ const Home = () => {
         setLoading(true);
         
         // Fetch user data
-        const playerSessions = await getSessionsByPlayerId(user._id);
-        const ongoing = playerSessions.find(session => !session.endTime);
+        
+        const sessions = await getSessionsByPlayerId(user._id);
+        
+        const ongoing = sessions.find(session => !session.endTime);
+        const latest = sessions.sort((a, b) => new Date(b.startTime) - new Date(a.startTime))[0];
+        
+        setRecentSession(ongoing || latest);
         setRecentSession(ongoing);
+
+        
 
         const allUsers = await getAllUsers();
         const currentUser = allUsers.find(u => u._id === user._id);
+        
         if (currentUser) {
           setBestScore(currentUser.score || 0);
         } else {
@@ -252,51 +351,72 @@ const Home = () => {
     fetchData();
   }, [user]);
 
-  // QR Scanner functionality
+    // Handle joining a room
+    const handleJoinRoom = async (roomId) => {
+      if (!token) {
+        setSnackbar({
+          open: true,
+          message: 'You must be logged in to join a room',
+          severity: 'error'
+        });
+        return;
+      }
+  
+      try {
+        setRoomLoading(true);
+        setRoomError(null);
+        
+        // Join the room through the API
+        const response = await joinRoom(roomId, token);
+        
+        // Update context with the joined room
+        await contextJoinRoom(roomId);
+        
+        setSnackbar({
+          open: true,
+          message: 'Successfully joined room!',
+          severity: 'success'
+        });
+        
+        // Navigate to the room page
+        navigate(`/player/rooms/${roomId}`);
+      } catch (error) {
+        console.error('Error joining room:', error);
+        setRoomError(error.response?.data?.message || 'Failed to join room');
+        setSnackbar({
+          open: true,
+          message: error.response?.data?.message || 'Failed to join room',
+          severity: 'error'
+        });
+      } finally {
+        setRoomLoading(false);
+      }
+    };
 
+  // QR Scanner functionality
   const handleQRCodeDetected = (result) => {
     try {
-      // Parse room data from QR code
       let roomId;
       if (typeof result === 'string') {
-        // Handle URL format: /player/rooms/:roomId/join
         if (result.includes('/rooms/')) {
           roomId = result.split('/rooms/')[1].split('/')[0];
         } else {
-          // Assume it's just the room ID
           roomId = result;
         }
       } else if (result?.roomId) {
-        // Handle object format { roomId: '...' }
         roomId = result.roomId;
       }
-      
+  
       if (!roomId) {
         throw new Error('Invalid room data in QR code');
       }
-      
-      // Attempt to join the room
+  
       handleJoinRoom(roomId);
+      closeScanner();
     } catch (error) {
       console.error('QR code error:', error);
-      setSnackbar({
-        open: true,
-        message: error.message,
-        severity: 'error'
-      });
+      setScanError(error.message);
     }
-  };
-
-
-  const openScanner = () => {
-    setScannerOpen(true);
-    startCamera();
-  };
-
-  const closeScanner = () => {
-    stopCamera();
-    setScannerOpen(false);
-    setScanError('');
   };
 
 
@@ -432,11 +552,12 @@ const Home = () => {
                       sx={{ mb: 2 }}
                     />
                     <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Game ID:</strong> {recentSession.gameId}
+                      <strong>Game:</strong> {recentSession.gameId?.title || 'N/A'}
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Room:</strong> {recentSession.roomId}
+                      <strong>Room:</strong> {recentSession.roomId?._id || 'N/A'}
                     </Typography>
+
                     <Typography variant="body2" sx={{ mb: 1 }}>
                       <strong>Score:</strong> {recentSession.totalScore}
                     </Typography>
@@ -593,48 +714,7 @@ const Home = () => {
         </Grid>
 
         {/* Middle Panel - Quick Actions */}
-        <Grid item xs={12} lg={6} md={4}>
-          <GamingCard sx={{ height: 'fit-content', width: 500 }}>
-            <CardContent sx={{ textAlign: 'center', py: 4 }}>
-              <Typography variant="h6" sx={{ mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                <QrCodeScannerIcon />
-                Quick Actions
-              </Typography>
-              <Stack spacing={3}>
-                <GlowButton
-                  startIcon={<QrCodeScannerIcon />}
-                  fullWidth
-                  size="large"
-                  sx={{ py: 2 }}
-                  onClick={openScanner}
-                >
-                  Scan QR Code
-                </GlowButton>
-                
-                <GlowButton
-                  fullWidth
-                  size="large"
-                  sx={{ py: 2 }}
-                  onClick={() => navigate('/player/rooms')}
-                >
-                  Browse Rooms
-                </GlowButton>
-
-                <GlowButton
-                  fullWidth
-                  size="large"
-                  sx={{ py: 2 }}
-                  onClick={() => navigate('/player/join')}
-                >
-                  Join Room Manually
-                </GlowButton>
-              </Stack>
-            </CardContent>
-          </GamingCard>
-        </Grid>
-
-        {/* Right Panel - Leaderboard */}
-      <Grid item xs={12} lg={3} md={4}>
+        <Grid item xs={12} lg={3} md={4}>
         <GamingCard sx={{ height: 'fit-content', width: 500 }}>
         <CardContent sx={{ textAlign: 'center', py: 4 }}>
           <Typography variant="h6" sx={{ mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
@@ -705,6 +785,99 @@ const Home = () => {
         </CardContent>
       </GamingCard>
         </Grid>
+
+        {/* Right Panel - Leaderboard */}
+        <Grid item xs={12} lg={3} md={4}>
+          <GamingCard sx={{ height: 'fit-content', width: 405 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <LeaderboardIcon />
+                Leaderboard
+              </Typography>
+              <Tabs 
+                value={tab} 
+                onChange={(_, newVal) => setTab(newVal)}
+                variant="fullWidth"
+                sx={{
+                  '& .MuiTab-root': { color: '#ffffff', fontSize: '0.8rem' },
+                  '& .Mui-selected': { color: '#c9b037' },
+                  '& .MuiTabs-indicator': { backgroundColor: '#c9b037' }
+                }}
+              >
+                <Tab label="Top Players" />
+                <Tab label="Recent" />
+              </Tabs>
+              <Divider sx={{ my: 2, borderColor: '#3d5a80' }} />
+              <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
+                {tab === 0 && (
+                  <Stack spacing={2}>
+                    {topPlayers.length > 0 ? (
+                      topPlayers.slice(0, 8).map((player, index) => (
+                        <Box key={player.id} sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 2,
+                          p: 2,
+                          background: index < 3 ? 'linear-gradient(135deg, #16213e 0%, #1a1a2e 100%)' : 'transparent',
+                          borderRadius: 1,
+                          border: index < 3 ? '1px solid #3d5a80' : 'none'
+                        }}>
+                          <Typography variant="h6" sx={{ 
+                            color: index === 0 ? '#c9b037' : index === 1 ? '#c0c0c0' : index === 2 ? '#cd7f32' : '#ffffff',
+                            minWidth: 24
+                          }}>
+                            {index + 1}
+                          </Typography>
+                          <Avatar sx={{ width: 32, height: 32, bgcolor: '#3d5a80' }}>
+                            <PersonIcon />
+                          </Avatar>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="body2">{player.name}</Typography>
+                          </Box>
+                          <Typography variant="body2" sx={{ color: '#c9b037', fontWeight: 'bold' }}>
+                            {player.score}
+                          </Typography>
+                        </Box>
+                      ))
+                    ) : (
+                      <Box sx={{ textAlign: 'center', py: 3 }}>
+                        <LeaderboardIcon sx={{ fontSize: 48, color: '#3d5a80', mb: 2 }} />
+                        <Typography color="text.secondary">No players found</Typography>
+                      </Box>
+                    )}
+                  </Stack>
+                )}
+                {tab === 1 && (
+                  <Stack spacing={2}>
+                    {recentPlayers.length > 0 ? (
+                      recentPlayers.slice(0, 8).map((player, index) => (
+                        <Box key={player.id} sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 2,
+                          p: 2,
+                          borderRadius: 1
+                        }}>
+                          <Avatar sx={{ width: 32, height: 32, bgcolor: '#3d5a80' }}>
+                            <PersonIcon />
+                          </Avatar>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="body2">{player.name}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {player.lastPlayed}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      ))
+                    ) : (
+                      <Typography color="text.secondary">No recent activity found</Typography>
+                    )}
+                  </Stack>
+                )}
+              </Box>
+            </CardContent>
+          </GamingCard>
+        </Grid>
       </Grid>
 
       {/* QR Scanner Dialog */}
@@ -716,59 +889,20 @@ const Home = () => {
           </IconButton>
         </DialogTitle>
         <DialogContent>
-          <Box sx={{ 
-            position: 'relative', 
-            width: '100%', 
-            height: '300px',
-            borderRadius: '8px',
-            overflow: 'hidden'
-          }}>
-            <QrScanner
-              onStart={() => setScannerLoading(false)}
-              onDecode={(result) => {
-                handleQRCodeDetected(result);
-                closeScanner();
-              }}
-              onError={(error) => {
-                if (error?.message.includes('Permission')) {
-                  setScanError('Camera permission denied. Please allow camera access in your browser settings.');
-                } else {
-                  setScanError(error?.message || 'Failed to access camera');
-                }
-              }}
-              constraints={{
-                facingMode: 'environment'
-              }}
-              containerStyle={{
+          <ScannerContainer>
+            <video
+              ref={videoRef}
+              style={{
                 width: '100%',
                 height: '100%',
-                objectFit: 'cover'
+                objectFit: 'cover',
+                borderRadius: '8px',
+                backgroundColor: '#000'
               }}
-              videoStyle={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover'
-              }}
-              viewFinder={() => (
-                <ScannerOverlay />
-              )}
+              playsInline
             />
-              {scannerLoading && (
-                <Box sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: 'rgba(0,0,0,0.7)'
-                }}>
-                  <CircularProgress sx={{ color: '#c9b037' }} />
-                 </Box>
-                )}
-          </Box>
+            <ScannerOverlay />
+          </ScannerContainer>
           {scanError && (
             <Alert severity="error" sx={{ mt: 2 }}>
               {scanError}
@@ -790,6 +924,7 @@ const Home = () => {
           </Button>
         </DialogActions>
       </QRScannerDialog>
+
        {/* Snackbar for notifications */}
        <Snackbar
         open={snackbar.open}

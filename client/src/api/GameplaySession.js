@@ -31,13 +31,9 @@ export const getSessionById = async (id) => {
 // Get sessions by player ID
 export const getSessionsByPlayerId = async (playerId) => {
   try {
-    const token = localStorage.getItem('token');
+ 
     
-    const response = await axios.get(`${backendUrl}/sessions/player/${playerId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axios.get(`${backendUrl}/sessions/player/${playerId}`);
     
     const data = response.data.data || response.data || [];
 

@@ -7,6 +7,11 @@ const multiplayerRoomSchema = new mongoose.Schema({
     ref: 'QRCode',
     required: true
   },
+  gameId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'EscapeGame',
+    required: true
+  },
   accesscode: {
     type: String,
     required: true,

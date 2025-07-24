@@ -8,7 +8,8 @@ import {
   joinRoom,
   createRoom,
   updateRoom,
-  deleteRoom
+  deleteRoom,
+  getRoomsByGameId
 } from '../controllers/MultiplayerRoom.js';
 
 // GET /api/rooms
@@ -20,6 +21,7 @@ roomRouter.get('/:id', getRoomById);
 
 roomRouter.post('/:id/join', protect, joinRoom);
 
+roomRouter.get('/:gameId', getRoomsByGameId);
 // POST /api/rooms
 roomRouter.post('/', createRoom);
 

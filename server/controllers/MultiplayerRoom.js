@@ -1,6 +1,7 @@
 import MultiplayerRoom from '../models/MultiplayerRoom.js';
 import { protect, authorize } from '../middleware/auth.js';
 import RoomParticipant from'../models/RoomParticipant.js';
+import EscapeGame from '../models/EscapeGame.js';
 
 export const getAllRooms = [
 
@@ -168,6 +169,36 @@ export const joinRoom = async (req, res) => {
 };
 
 
+export const getRoomsByGameId = [
+  protect,
+  async (req, res) => {
+    try {
+      const rooms = await MultiplayerRoom.find({ gameId: req.params.gameId })
+        .populate('qrCode')
+        .populate('participants')
+        .sort({ createdAt: -1 });
+
+      res.status(200).json({
+        success: true,
+        count: rooms.length,
+        data: rooms
+      });
+    } catch (error) {
+      if (error.name === 'CastError') {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid game ID'
+        });
+      }
+
+      res.status(500).json({
+        success: false,
+        message: 'Server error',
+        error: error.message
+      });
+    }
+  }
+];
 
 export const createRoom = [
   protect,
