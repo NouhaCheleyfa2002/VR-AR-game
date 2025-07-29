@@ -9,7 +9,9 @@ import {
   createRoom,
   updateRoom,
   deleteRoom,
-  getRoomsByGameId
+  getRoomsByGameId,
+  getRoomByCode,
+  joinRoomByCode
 } from '../controllers/MultiplayerRoom.js';
 
 // GET /api/rooms
@@ -18,10 +20,13 @@ roomRouter.get('/', getAllRooms);
 // GET /api/rooms/:id
 roomRouter.get('/:id', getRoomById);
 
+roomRouter.get('/games/:gameId', getRoomsByGameId);
+
+roomRouter.get('/code/:code',protect, getRoomByCode);
+roomRouter.post('/code/:code/join', joinRoomByCode);
 
 roomRouter.post('/:id/join', protect, joinRoom);
 
-roomRouter.get('/:gameId', getRoomsByGameId);
 // POST /api/rooms
 roomRouter.post('/', createRoom);
 

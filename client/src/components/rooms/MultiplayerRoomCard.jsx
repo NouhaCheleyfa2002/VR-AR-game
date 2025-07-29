@@ -8,7 +8,8 @@ import {
   Trash2, 
   Edit,
   QrCode,
-  Clock
+  Clock,
+  Crown
 } from 'lucide-react';
 
 const MultiplayerRoomCard = ({ room, onDeleteRoom, showActions = false }) => {
@@ -34,11 +35,14 @@ const MultiplayerRoomCard = ({ room, onDeleteRoom, showActions = false }) => {
         return 'bg-blue-100 text-blue-800';
       case 'Cancelled':
         return 'bg-red-100 text-red-800';
+      case 'open':
+        return 'bg-green-100 text-green-800';
+      case 'closed':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-500';
     }
   };
-console.log(room.gameId);
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow p-5 mb-6">
@@ -81,7 +85,7 @@ console.log(room.gameId);
           <Users className="w-4 h-4 text-indigo-500" />
           <span>Players:</span>
           <span className="font-medium text-gray-900">
-            {room.participants?.length || 0} / { room.maxPlayers || 'N/A'}
+            {room.participants?.length || 0} / {room.maxPlayers || 'N/A'}
           </span>
         </div>
         
@@ -94,8 +98,8 @@ console.log(room.gameId);
         <div className="flex items-center space-x-2">
           <QrCode className="w-4 h-4 text-indigo-500" />
           <span>QR Generated:</span>
-          <span className={`font-semibold ${room.qrCodeGenerated ? 'text-green-600' : 'text-red-500'}`}>
-            {room.qrCodeGenerated ? 'Yes' : 'No'}
+          <span className={`font-semibold ${room.qrCode ? 'text-green-600' : 'text-red-500'}`}>
+            {room.qrCode ? 'Yes' : 'No'}
           </span>
         </div>
       </div>
@@ -136,20 +140,20 @@ console.log(room.gameId);
           {room.participants && room.participants.length > 0 ? (
             room.participants.map((participant, index) => (
               <div
-                key={participant.participantId || participant.id || index}
-                className="flex justify-between items-center border-b border-gray-200 pb-1 last:border-b-0"
+                key={participant._id || index}
+                className="flex justify-between items-center border-b border-gray-200 pb-2 last:border-b-0"
               >
                 <div className="flex items-center space-x-2">
-                  <span className="text-gray-700">
-                    Player #{participant.playerId || participant._id || index + 1}
+                  <span className="text-gray-700 font-medium">
+                    participant ID: {room.participants}
                   </span>
-                  {participant.username && (
-                    <span className="text-gray-500">({participant.username})</span>
+                  {participant.isHost && (
+                    <Crown className="w-4 h-4 text-yellow-500" title="Host" />
                   )}
                 </div>
                 
                 <div className="flex items-center space-x-2">
-                  <span className={`text-sm px-2 py-1 rounded-full ${
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
                     participant.isReady 
                       ? 'bg-green-100 text-green-700' 
                       : 'bg-yellow-100 text-yellow-700'
@@ -159,7 +163,7 @@ console.log(room.gameId);
                   
                   {participant.joinedAt && (
                     <span className="text-xs text-gray-500">
-                      {formatDate(participant.joinedAt)}
+                      Joined: {formatDate(participant.joinedAt)}
                     </span>
                   )}
                 </div>

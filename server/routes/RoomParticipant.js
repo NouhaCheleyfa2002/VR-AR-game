@@ -9,28 +9,28 @@ import {
   getParticipantsByPlayerId,
   createParticipant,
   updateParticipant,
-  deleteParticipant
+  deleteParticipant,
+  toggleParticipantReady,
+  updateParticipantReadyStatus
 } from '../controllers/RoomParticipant.js';
 
-// GET /api/participants
-participantRouter.get('/',protect,authorize('admin'), getAllParticipants);
 
-// GET /api/participants/:id
-participantRouter.get('/:id',protect,authorize('admin'), getParticipantById);
+participantRouter.get('/', protect, getAllParticipants);
 
-// GET /api/participants/room/:roomId
-participantRouter.get('/room/:roomId',protect,authorize('admin'), getParticipantsByRoomId);
+participantRouter.get('/:id', protect, getParticipantById);
 
-// GET /api/participants/player/:playerId
-participantRouter.get('/player/:playerId',protect,authorize('admin'), getParticipantsByPlayerId);
+participantRouter.get('/room/:roomId', protect, getParticipantsByRoomId);
 
-// POST /api/participants
-participantRouter.post('/',protect,authorize('admin'), createParticipant);
+participantRouter.get('/player/:playerId', protect, getParticipantsByPlayerId);
 
-// PUT /api/participants/:id
-participantRouter.put('/:id',protect,authorize('admin'), updateParticipant);
+participantRouter.post('/', protect, createParticipant);
 
-// DELETE /api/participants/:id
-participantRouter.delete('/:id',protect,authorize('admin'), deleteParticipant);
+participantRouter.put('/:id', protect, updateParticipant);
+
+participantRouter.patch('/:id/toggle-ready', protect, toggleParticipantReady);
+
+participantRouter.patch('/:id/ready-status', protect, updateParticipantReadyStatus);
+
+participantRouter.delete('/:id', protect, deleteParticipant);
 
 export default participantRouter;

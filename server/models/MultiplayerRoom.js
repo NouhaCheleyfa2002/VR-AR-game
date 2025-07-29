@@ -36,6 +36,9 @@ const multiplayerRoomSchema = new mongoose.Schema({
     enum: ['open', 'closed'],
     default: 'open'
   },
+  maxPlayers:{
+    type:Number
+  },
   startGame: {
     type: Boolean,
     default: false

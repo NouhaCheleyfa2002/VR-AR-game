@@ -44,7 +44,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { getAllUsers, getUserScore } from '../../api/UserApi';
 import { getSessionsByPlayerId } from '../../api/GameplaySession';
 import { getAllInvitations } from '../../api/Invitation';
-import { getAllRooms, joinRoom } from '../../api/RoomApi';
+import { getAllRooms, joinRoom ,getRoomByCode} from '../../api/RoomApi';
 import { BrowserQRCodeReader } from '@zxing/library';
 
 // Custom styled components for gaming theme
@@ -155,6 +155,9 @@ const Home = () => {
   const [roomLoading, setRoomLoading] = useState(false);
   const [roomError, setRoomError] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+  const [joinRoomDialogOpen, setJoinRoomDialogOpen] = useState(false);
+  const [roomInputValue, setRoomInputValue] = useState('');
+  const [roomInputError, setRoomInputError] = useState('');
   
   // QR Scanner states
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -390,6 +393,130 @@ const Home = () => {
         });
       } finally {
         setRoomLoading(false);
+      }
+    };
+
+    const handleJoinRoomFromInput = async () => {
+      if (!roomInputValue.trim()) {
+        setRoomInputError('Please enter a room URL or access code');
+        return;
+      }
+    
+      if (!token) {
+        setSnackbar({
+          open: true,
+          message: 'You must be logged in to join a room',
+          severity: 'error'
+        });
+        return;
+      }
+    
+      // Reset error
+      setRoomInputError('');
+    
+      try {
+        setRoomLoading(true);
+        setRoomError(null);
+    
+        let roomId;
+        let response;
+        
+        // Check if input is a URL
+        if (roomInputValue.includes('http') || roomInputValue.includes('/')) {
+          // Extract room ID from URL
+          roomId = extractRoomIdFromUrl(roomInputValue);
+          if (!roomId) {
+            setRoomInputError('Invalid room URL format');
+            return;
+          }
+          
+          // Join by room ID
+          response = await joinRoom(roomId, token);
+        } else {
+          // Treat as access code
+          const accessCode = roomInputValue.trim();
+          
+          try {
+            // First try to get room by access code to get the room ID
+            const room = await getRoomByCode(accessCode);
+            roomId = room._id;
+            
+            // Then join using the room ID
+            response = await joinRoom(roomId, token);
+          } catch (error) {
+            // If getRoomByCode fails, the room doesn't exist or there's an error
+            throw new Error('Room not found with this access code');
+          }
+        }
+        
+        // Update context with the joined room
+        await contextJoinRoom(roomId);
+        
+        setSnackbar({
+          open: true,
+          message: 'Successfully joined room!',
+          severity: 'success'
+        });
+        
+        // Navigate to the room page
+        navigate(`/player/rooms/${roomId}`);
+        
+        // Close dialog and reset
+        setJoinRoomDialogOpen(false);
+        setRoomInputValue('');
+        
+      } catch (error) {
+        console.error('Error joining room:', error);
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to join room';
+        setRoomInputError(errorMessage);
+        setSnackbar({
+          open: true,
+          message: errorMessage,
+          severity: 'error'
+        });
+      } finally {
+        setRoomLoading(false);
+      }
+    };
+    
+    // Also add this helper function to refresh available rooms if needed:
+    const refreshAvailableRooms = async () => {
+      try {
+        const rooms = await getAllRooms();
+        setAvailableRooms(rooms.filter(room => 
+          room.roomStatus === 'Waiting' && 
+          room.participants.length < room.maxPlayers
+        ));
+      } catch (error) {
+        console.error('Error refreshing rooms:', error);
+      }
+    };
+    
+    const extractRoomIdFromUrl = (url) => {
+      try {
+        // Handle different URL formats
+        const urlParts = url.split('/');
+        const roomsIndex = urlParts.findIndex(part => part === 'rooms');
+        
+        if (roomsIndex !== -1 && urlParts[roomsIndex + 1]) {
+          return urlParts[roomsIndex + 1];
+        }
+        
+        // If no specific pattern found, try to get the last part
+        const lastPart = urlParts[urlParts.length - 1];
+        if (lastPart && lastPart !== 'rooms') {
+          return lastPart;
+        }
+        
+        return null;
+      } catch (e) {
+        return null;
+      }
+    };
+    
+    const handleRoomInputKeyPress = (e) => {
+      if (e.key === 'Enter') {
+        handleJoinRoomFromInput();
       }
     };
 
@@ -736,9 +863,9 @@ const Home = () => {
               fullWidth
               size="large"
               sx={{ py: 2 }}
-              onClick={() => navigate('/player/rooms')}
+              onClick={() => setJoinRoomDialogOpen(true)}
             >
-              Join Rooms
+              Join Room
             </GlowButton>
           </Stack>
 
@@ -936,6 +1063,83 @@ const Home = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Join Room Dialog */}
+      <Dialog 
+        open={joinRoomDialogOpen} 
+        onClose={() => setJoinRoomDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            border: '1px solid #3d5a80',
+            borderRadius: '12px',
+            color: '#ffffff',
+            maxWidth: '500px',
+            width: '90%',
+          }
+        }}
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box component="span">Join Room</Box>
+          <IconButton onClick={() => setJoinRoomDialogOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ mb: 2, color: '#ffffff' }}>
+              Room URL or Access Code
+            </Typography>
+            <input
+              type="text"
+              value={roomInputValue}
+              onChange={(e) => setRoomInputValue(e.target.value)}
+              onKeyPress={handleRoomInputKeyPress}
+              placeholder="Paste room URL or enter access code"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #3d5a80',
+                borderRadius: '8px',
+                backgroundColor: '#16213e',
+                color: '#ffffff',
+                fontSize: '16px',
+                outline: 'none',
+              }}
+              autoFocus
+            />
+            <Typography variant="caption" sx={{ color: '#888', mt: 1, display: 'block' }}>
+              Examples: https://app.com/rooms/ABC123 or ABC123
+            </Typography>
+          </Box>
+
+          {roomInputError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {roomInputError}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'space-between', p: 3 }}>
+          <Button
+            onClick={() => setJoinRoomDialogOpen(false)}
+            sx={{ 
+              color: '#ffffff',
+              border: '1px solid #3d5a80',
+              '&:hover': {
+                backgroundColor: 'rgba(61, 90, 128, 0.2)',
+              }
+            }}
+          >
+            Cancel
+          </Button>
+          <GlowButton
+            onClick={handleJoinRoomFromInput}
+            disabled={roomLoading}
+          >
+            {roomLoading ? <CircularProgress size={20} /> : 'Join Room'}
+          </GlowButton>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

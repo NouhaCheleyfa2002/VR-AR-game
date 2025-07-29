@@ -30,7 +30,6 @@ export const RoomProvider = ({ children }) => {
     try {
       // Check what the joinRoom API actually returns
       const joinData = await joinRoomAPI(roomId, token);
-      console.log('Join room API response:', joinData);
       
       // If joinRoom returns room and participant separately
       if (joinData.room && joinData.participant) {

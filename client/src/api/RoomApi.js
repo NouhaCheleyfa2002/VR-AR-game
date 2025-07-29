@@ -26,17 +26,48 @@ export const getRoomById = async (id) => {
   }
 };
 
+// GET room by ID - FIXED
+export const getRoomBygameId = async (gameId) => {
+  try {
+    const response = await axios.get(`${backendUrl}/rooms/${gameId}`);
+    // Return the actual room object, not force it to be an array
+    return response.data.data || response.data;
+  } catch (error) {
+    console.error('Error fetching room by game ID:', error);
+    throw error;
+  }
+};
+
+
 // GET room by code (e.g., when scanning QR) - FIXED
 export const getRoomByCode = async (code) => {
   try {
     const response = await axios.get(`${backendUrl}/rooms/code/${code}`);
-    // Return the actual room object, not force it to be an array
+    
     return response.data.data || response.data;
   } catch (error) {
     console.error('Error fetching room by code:', error);
     throw error;
   }
 };
+
+export const joinRoomByCode = async (code, token) => {
+   try {
+    const response = await axios.post(
+        `${backendUrl}/rooms/code/${code}/join`,
+         {},
+         {
+           headers: {
+             Authorization: `Bearer ${token}`
+           }
+        }
+       );
+      return response.data.data;
+     } catch (error) {
+       console.error('Error joining room by code:', error?.response?.data || error.message);
+       throw error;
+     }
+    };
 
 // join a room
 export const joinRoom = async (roomId) => {
@@ -66,9 +97,13 @@ export const createRoom = async (data) => {
 };
 
 // PUT update a room - FIXED
-export const updateRoom = async (id, data) => {
+export const updateRoom = async (roomId, data) => {
   try {
-    const response = await axios.put(`${backendUrl}/rooms/${id}`, data);
+    console.log(roomId);
+    
+    const response = await axios.put(`${backendUrl}/rooms/${roomId}`, data);
+    
+    
     // Return the actual room object, not force it to be an array
     return response.data.data || response.data;
   } catch (error) {

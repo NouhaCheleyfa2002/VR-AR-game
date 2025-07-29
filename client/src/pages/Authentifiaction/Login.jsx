@@ -34,11 +34,6 @@ const Login = () => {
   
       // PROPERLY EXTRACT DATA FROM RESPONSE
       const { user, token } = response.data.data; 
-      
-      // Debugging logs (temporary)
-      console.log('API Response:', response.data);
-      console.log('Extracted user:', user);
-      console.log('Extracted token:', token);
   
       // Update context (this will handle storage automatically)
       login({ token, user });

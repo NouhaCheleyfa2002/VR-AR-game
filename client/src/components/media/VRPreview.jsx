@@ -1,12 +1,12 @@
-import React from 'react';
-import DungeonScene from '../scenes/DungeonScene';
+  import React from 'react';
+  import DungeonScene from '../scenes/DungeonScene';
 
-const VrPreviewer = () => {
-  return (
-    <div style={{ height: '100vh', width: '100vw' }}>
-      <DungeonScene />
-    </div>
-  );
-};
+  const VrPreviewer = () => {
+    return (
+      <div style={{ height: '100vh', width: '100vw' }}>
+        <DungeonScene />
+      </div>
+    );
+  };
 
-export default VrPreviewer;
+  export default VrPreviewer;

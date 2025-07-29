@@ -21,6 +21,7 @@ import { Share, ContentCopy } from '@mui/icons-material';
 import MultiplayerRoomCard from '../../components/rooms/MultiplayerRoomCard';
 import ParticipantList from '../../components/roomParticipant/PaticipantList';
 import { getRoomById, updateRoom } from '../../api/RoomApi';
+import { getAllParticipants } from '../../api/RoomParticipant'; 
 import { useRoom } from '../../context/RoomContext';
 
 const PlayerRoomPage = () => {
@@ -33,7 +34,7 @@ const PlayerRoomPage = () => {
     joinRoom
   } = useRoom();
 
-  
+  const [fullParticipants, setFullParticipants] = useState([]); // Add this state
   const [updating, setUpdating] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [pollingInterval, setPollingInterval] = useState(null);
@@ -60,6 +61,36 @@ const PlayerRoomPage = () => {
       if (interval) clearInterval(interval);
     };
   }, [roomId, room, contextLoading]);
+
+  // Add effect to fetch full participant data when room participants change
+  useEffect(() => {
+    if (room?.participants?.length > 0) {
+      fetchFullParticipants();
+    }
+  }, [room?.participants]);
+
+  const fetchFullParticipants = async () => {
+    try {
+      // Get all participants
+      const allParticipants = await getAllParticipants();
+      
+      
+      // Filter to get only participants that are in this room
+      const roomParticipantIds = room.participants || [];
+      const roomFullParticipants = allParticipants.filter(p => 
+        roomParticipantIds.includes(p._id)
+      );
+      
+      setFullParticipants(roomFullParticipants);
+    } catch (error) {
+      console.error('Error fetching full participants:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to load participant details',
+        severity: 'error'
+      });
+    }
+  };
 
   const initializeRoom = async () => {
     try {
@@ -110,32 +141,43 @@ const PlayerRoomPage = () => {
         handleLeaveRoom();
         return;
       }
+
+      // Refresh participant data during polling
+      if (room.participants?.length > 0) {
+        fetchFullParticipants();
+      }
     } catch (error) {
       console.error('Error fetching room data:', error);
     }
   };
 
-  const handleReadyToggle = async (updatedParticipant) => {
+  const handleReadyToggle = async (updatedParticipant, toggleResponse, roomId) => {
     if (updating || !room || !participant) return;
-
+  
     try {
       setUpdating(true);
-
-      const updatedParticipants = room.participants.map((p) =>
-        p.participantId === updatedParticipant.participantId
-          ? { ...p, isReady: updatedParticipant.isReady }
-          : p
+  
+      // Update the full participants state with the API response data
+      setFullParticipants(prevParticipants =>
+        prevParticipants.map((p) =>
+          p._id === updatedParticipant._id ? updatedParticipant : p
+        )
       );
-
-      const updatedRoomData = { ...room, participants: updatedParticipants };
-
-      await updateRoom(room.roomId, updatedRoomData);
-
+  
+      // Only update room status if the toggle response indicates all participants are ready/not ready
+      if (roomId && toggleResponse?.allParticipantsReady !== undefined) {
+        const roomUpdateData = {
+          roomStatus: toggleResponse.allParticipantsReady ? 'ready' : 'waiting'
+        };
+        
+      }
+  
       setSnackbar({
         open: true,
-        message: updatedParticipant.isReady ? 'Marked as ready' : 'Marked as not ready',
+        message: toggleResponse?.message || `Participant marked as ${updatedParticipant.isReady ? 'ready' : 'not ready'}`,
         severity: 'success'
       });
+  
     } catch (error) {
       console.error('Error updating ready status:', error);
       setSnackbar({
@@ -143,10 +185,14 @@ const PlayerRoomPage = () => {
         message: 'Failed to update ready status',
         severity: 'error'
       });
+      
+      // Refresh participant data on error
+      fetchFullParticipants();
     } finally {
       setUpdating(false);
     }
   };
+  
 
   const handleLeaveRoom = () => {
     if (pollingInterval) clearInterval(pollingInterval);
@@ -205,7 +251,7 @@ const PlayerRoomPage = () => {
       try {
         await navigator.share({
           title: 'Join My Game Room',
-          text: `Join my multiplayer game room: ${room?.roomName || 'Game Room'}`,
+          text: `Join my game room: ${room?.roomName || 'Game Room'}`,
           url: shareUrl,
         });
       } catch (err) {
@@ -245,9 +291,9 @@ const PlayerRoomPage = () => {
     );
   }
 
-  const allReady = room.participants?.every((p) => p.isReady) || false;
+  // Use fullParticipants for ready check
+  const allReady = fullParticipants?.every((p) => p.isReady) || false;
   const joinUrl = `${window.location.origin}/player/rooms/${roomId}/join`;
-
 
   return (
     <Container sx={{ mt: 4 }}>
@@ -262,11 +308,10 @@ const PlayerRoomPage = () => {
 
       <MultiplayerRoomCard room={{ ...room, participants: room.participants }} />
  
-   
     
       <Box mt={3}>
         <ParticipantList
-          participants={room.participants || []}
+          participants={fullParticipants || []}
           currentPlayerId={participant.playerId}
           onReadyToggle={handleReadyToggle}
           disabled={updating}
@@ -276,9 +321,6 @@ const PlayerRoomPage = () => {
       {/* Host-only controls */}
       {participant?.isHost && (
         <Box mt={4}>
-          <Typography variant="h6" gutterBottom>
-            Host Controls
-          </Typography>
 
           <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="subtitle1" gutterBottom>
@@ -312,22 +354,6 @@ const PlayerRoomPage = () => {
               </Button>
             </Box>
 
-            <Box>
-            <Typography
-              component="div" 
-              variant="body2"
-              color="text.secondary"
-              gutterBottom
-            >
-              Room Code:
-              <Chip 
-                label={room.roomCode || roomId.slice(-6)} 
-                size="small" 
-                sx={{ ml: 1 }}
-                onClick={() => copyToClipboard(room.roomCode || roomId.slice(-6))}
-              />
-            </Typography>
-            </Box>
           </Paper>
 
           {allReady ? (
@@ -343,7 +369,7 @@ const PlayerRoomPage = () => {
             </Button>
           ) : (
             <Alert severity="info">
-              Waiting for all players to be ready... ({room.participants?.filter(p => p.isReady).length || 0}/{room.participants?.length || 0})
+              Waiting for all players to be ready... ({fullParticipants?.filter(p => p.isReady).length || 0}/{fullParticipants?.length || 0})
             </Alert>
           )}
         </Box>
