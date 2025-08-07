@@ -1,59 +1,97 @@
-// pages/QRCodeManagerPage.jsx
-import React, { useState } from 'react';
-import { Grid, Typography } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Grid, Typography, CircularProgress, Alert } from '@mui/material';
 import QRCodeCard from '../../components/QR/QRCodeCard';
 import QRCodeGenerator from '../../components/QR/QRoGenerator';
-import QRCodeScanner from '../../components/QR/QRodeScanner';
+import GameQRCodeGenerator from '../../components/QR/GameQRCodeGenerator';
+import {
+  getAllQRCodes,
+  createQRCode,
+  updateQRCode,
+  deleteQRCode
+} from '../../api/QRCodeApi';
 
 const QRCodeManagerPage = () => {
-  const [codes, setCodes] = useState([{
-    codeId: 101,
-    roomId: 1,
-    gameId: 10,
-    culturalElementId: 5,
-    content: 'Join Room 1 – Andalusian Tower',
-    maxScans: 3,
-    scans: 1,
-    expirationTime: '2025-07-04T23:00:00Z',
-  },
-  {
-    codeId: 102,
-    roomId: 2,
-    gameId: 11,
-    culturalElementId: 8,
-    content: 'Join Room 2 – Roman Mosaic',
-    maxScans: 5,
-    scans: 5,
-    expirationTime: '2025-07-03T20:00:00Z', // expired
-  },]);
+  const [codes, setCodes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleGenerate = (newCode) => {
-    setCodes([...codes, newCode]);
+  // Fetch all QR codes from API
+  useEffect(() => {
+    const fetchCodes = async () => {
+      try {
+        const qrCodes = await getAllQRCodes();
+        setCodes(qrCodes);
+      } catch (err) {
+        setError(err.message || 'Failed to load QR codes');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCodes();
+  }, []);
+
+  // This function is called when a QR code is already created by child components
+  // The 'createdCode' parameter is already a complete QR code object from the API
+  const handleGenerate = (createdCode) => {
+    try {
+      console.log('Adding created QR code to list:', createdCode);
+      
+      // Simply add the already-created QR code to the state
+      setCodes(prevCodes => [...prevCodes, createdCode]);
+      
+      // Clear any previous errors
+      setError(null);
+    } catch (err) {
+      console.error('Error adding QR code to list:', err);
+      setError('Failed to add QR code to list');
+    }
   };
 
-  const handleScanJoin = (updatedCode) => {
-    setCodes((prev) =>
-      prev.map((code) =>
-        code.codeId === updatedCode.codeId ? updatedCode : code
-      )
-    );
+  // This function can be used if you want to create QR codes directly from the parent
+  const handleCreateQRCode = async (qrData) => {
+    try {
+      const createdCode = await createQRCode(qrData);
+      setCodes(prevCodes => [...prevCodes, createdCode]);
+      return createdCode;
+    } catch (err) {
+      setError(err.message || 'Failed to generate QR code');
+      throw err;
+    }
   };
+
+  const handleDelete = async (codeId) => {
+    try {
+      await deleteQRCode(codeId);
+      setCodes(codes.filter(c => c._id !== codeId));
+      setError(null); // Clear any previous errors
+    } catch (err) {
+      setError(err.message || 'Failed to delete QR code');
+    }
+  };
+
+  if (loading) return <CircularProgress />;
+  if (error) return <Alert severity="error">{error}</Alert>;
 
   return (
     <>
       <Typography variant="h4" className='p-5 text-center' gutterBottom>
         QR Code Management
       </Typography>
+      
       <Grid container spacing={3} className="justify-center">
         <Grid item xs={12} md={6}>
           <QRCodeGenerator onGenerate={handleGenerate} />
         </Grid>
         <Grid item xs={12} md={6}>
-          <QRCodeScanner qrCodes={codes} onJoinRoom={handleScanJoin} />
+          <GameQRCodeGenerator onGenerate={handleGenerate} />
         </Grid>
+        
         {codes.map((code) => (
-          <Grid item xs={12} md={6} key={code.codeId}>
-            <QRCodeCard code={code} />
+          <Grid item xs={12} md={6} key={code._id}>
+            <QRCodeCard 
+              code={code}
+              onDelete={() => handleDelete(code._id)}
+            />
           </Grid>
         ))}
       </Grid>

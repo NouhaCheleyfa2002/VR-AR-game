@@ -1,15 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import fs from 'fs'
 
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: '0.0.0.0', // Allow external connections
+    host: '0.0.0.0',
     port: 5173,
-    allowedHosts: [
-      '549040f67917.ngrok-free.app', // Your specific ngrok domain
-      '.ngrok-free.app' // Allow all ngrok free domains
-    ] // Allow all hosts (for ngrok)
+    https: {
+      key: fs.readFileSync('../192.168.100.233+2-key.pem'),
+      cert: fs.readFileSync('../192.168.100.233+2.pem')
+    }
   },
   optimizeDeps: {
     include: [

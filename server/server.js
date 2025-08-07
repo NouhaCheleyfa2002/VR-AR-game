@@ -18,16 +18,28 @@ import participantRouter from './routes/RoomParticipant.js';
 import scenarioRouter from './routes/Scenario.js';
 import sceneRouter from './routes/Scene.js';
 import userRouter from './routes/User.js';
-
+import https from 'https';
+import fs from 'fs';
 
 const PORT = process.env.PORT || 4000;
 const app = express();
+
+const options = {
+    key: fs.readFileSync('../192.168.100.233+2-key.pem'),
+    cert: fs.readFileSync('../192.168.100.233+2.pem')
+  };
 
 // Middleware
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
-app.use(cors());
+app.use(cors({
+    origin: [
+      'https://localhost:5173',
+      'https://192.168.100.233:5173'
+    ],
+    credentials: true
+  }));
 
 await connectDB();
 
@@ -51,4 +63,6 @@ app.get('/', (req, res) => res.send("API working"));
 
 
 
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+https.createServer(options, app).listen(4000, '0.0.0.0', () => {
+    console.log('HTTPS Server running on https://0.0.0.0:4000');
+  });

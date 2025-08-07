@@ -6,22 +6,31 @@ import {
   getQRCodeById,
   createQRCode,
   updateQRCode,
-  deleteQRCode
+  deleteQRCode,scanQRCode,
+  getQRCodesByRoom,
+  getQRCodesByGame
 } from '../controllers/QRcode.js';
 
 // GET /api/qrcodes
 QRCodeRouter.get('/', getAllQRCodes);
 
 // GET /api/qrcodes/:id
-QRCodeRouter.get('/:id',protect, authorize('admin'),  getQRCodeById);
+QRCodeRouter.get('/:id',getQRCodeById);
+
+
+QRCodeRouter.post('/scan',scanQRCode);
+
+QRCodeRouter.get('/room/:roomId', getQRCodesByRoom);
+
+QRCodeRouter.get('/game/:gameId', getQRCodesByGame);
 
 // POST /api/qrcodes
-QRCodeRouter.post('/', protect, authorize('admin'), createQRCode);
+QRCodeRouter.post('/', createQRCode);
 
 // PUT /api/qrcodes/:id
-QRCodeRouter.put('/:id', protect, authorize('admin'), updateQRCode);
+QRCodeRouter.put('/:id',updateQRCode);
 
 // DELETE /api/qrcodes/:id
-QRCodeRouter.delete('/:id',protect, authorize('admin'),  deleteQRCode);
+QRCodeRouter.delete('/:id', deleteQRCode);
 
 export default QRCodeRouter;

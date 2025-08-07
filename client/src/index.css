@@ -19,7 +19,20 @@ html, body, #root {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+/* This ensures the overlay works across browsers */
+.xr-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
 
+.xr-overlay > * {
+  pointer-events: auto;
+}
 a {
   font-weight: 500;
   color: #646cff;

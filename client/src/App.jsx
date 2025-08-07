@@ -8,7 +8,7 @@ import Register from './pages/Authentifiaction/Register';
 
 import Home from './pages/player/Home'; 
 import GameplaySessionViewer from './pages/player/GameplaySessionViewer';
-import HintPage from './pages/player/HintPage';
+import SkifaKahlaARGame from './pages/player/gamePage';
 import FeedbackPage from './pages/player/FeedbackPage';
 import PlayerInvitationPage from './pages/player/PlayerInvitationPage';
 import JoinRoomPage from './pages/player/JoinRoomPage';
@@ -43,7 +43,7 @@ function App() {
           <Route path="/player">
             <Route path="/player" element={<Home />} />
             <Route path="/player/gameplaysessions" element={<GameplaySessionViewer/>} />
-            <Route path="/player/hints" element={<HintPage />} />
+            <Route path="/player/game" element={<SkifaKahlaARGame />} />
             <Route path="/player/feedbacks" element={<FeedbackPage />} />
             
             <Route path="/player/rooms/:roomId" element={<PlayerRoomPage />} />
