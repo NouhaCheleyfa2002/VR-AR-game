@@ -1,5 +1,6 @@
 import React, { Suspense, useState, useEffect, useRef, useCallback } from 'react';
 import DungeonScene from '../../components/scenes/DungeonScene';
+import ChatBot from '../../components/ChatBot';
 
 
 // QR Scanner Component (simplified - removing external dependencies)
@@ -440,72 +441,7 @@ const SkifaKahlaARGame = () => {
         )}
 
       </div>
-
-      {/* Game Instructions */}
-      {gameState === 'playing' && (
-        <div className="fixed bottom-4 left-4 right-4 bg-amber-900 bg-opacity-95 text-amber-100 p-4 rounded-lg z-10 border border-amber-600">
-          <h3 className="font-bold mb-2 text-amber-300">🕵️ Mission Objectives:</h3>
-          <ul className="text-sm space-y-1">
-            <li className={puzzleStates.mapFragments.collected === 4 ? 'line-through text-green-400' : ''}>
-              • Find and collect all 4 map fragments scattered around the fortress
-            </li>
-            <li className={puzzleStates.cipherWheel.solved ? 'line-through text-green-400' : ''}>
-              • Decode the Arabic cipher wheel mechanism
-            </li>
-            <li className={puzzleStates.hiddenCompartment.revealed ? 'line-through text-green-400' : ''}>
-              • Discover the hidden compartment in the fortress wall
-            </li>
-            <li className={puzzleStates.woodenChest.unlocked ? 'line-through text-green-400' : ''}>
-              • Retrieve the coded Ottoman intelligence message
-            </li>
-          </ul>
-          {currentMode === 'desktop' && (
-            <p className="text-xs mt-2 text-amber-300">
-              💡 Click on glowing objects to interact • Mouse to look around • Scroll to zoom
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Start Game Button */}
-      {gameState === 'ready' && (
-        <div className="fixed bottom-4 right-4 z-10">
-          <button
-            onClick={() => setGameState('playing')}
-            className="bg-amber-600 text-white px-8 py-4 rounded-lg font-bold text-xl hover:bg-amber-700 transition-colors shadow-lg border-2 border-amber-500"
-          >
-            🚀 Begin Infiltration
-          </button>
-        </div>
-      )}
-
-      {/* Debug/Test Buttons - Development Only */}
-      {gameState === 'playing' && (
-        <div className="fixed top-4 right-4 space-y-2 z-10 bg-black bg-opacity-70 p-3 rounded-lg">
-          <div className="text-white text-sm font-bold mb-2">🛠️ Debug Tools</div>
-          <button 
-            onClick={() => handleGameInteraction('Map Fragment 1')}
-            className="block w-full bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-            disabled={puzzleStates.mapFragments.collected >= puzzleStates.mapFragments.total}
-          >
-            Collect Fragment
-          </button>
-          <button 
-            onClick={() => handleGameInteraction('Cipher Wheel')}
-            className="block w-full bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
-            disabled={puzzleStates.cipherWheel.solved}
-          >
-            Solve Cipher
-          </button>
-          <button 
-            onClick={() => handleGameInteraction('Hidden Compartment')}
-            className="block w-full bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700"
-            disabled={!puzzleStates.hiddenCompartment.revealed || puzzleStates.woodenChest.unlocked}
-          >
-            Unlock Chest
-          </button>
-        </div>
-      )}
+        <ChatBot/>
     </div>
   );
 };
