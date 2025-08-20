@@ -1,7 +1,7 @@
 // src/App.jsx
 import { Routes, Route } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
-
+import { useNavigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Authentifiaction/Login';
 import Register from './pages/Authentifiaction/Register';
@@ -28,28 +28,32 @@ import ManagePuzzlePage from './pages/admin/PuzzlesManagement';
 import MediaLibraryManagement from './pages/admin/MediaLibraryManagement';
 import ReportPage from './pages/admin/ReportPage';
 import QRCodeManagerPage from './pages/admin/QRCodeManagement';
-import DungeonScene from './components/scenes/DungeonScene';
+import WelcomePage from './pages/player/LandingPage';
 
 
 function App() {
+  const navigate = useNavigate();
   return (
     
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/" element={<WelcomePage onLogin={() => navigate('/login')}
+          onRegister={() => navigate('/register')}
+          onGuestPlay={() => navigate('/game')}/> } />
 
         {/* Player Routes */}
         <Route element={<ProtectedRoute requiredRole="player" />}>
           <Route path="/player">
             <Route path="/player" element={<Home />} />
             <Route path="/player/gameplaysessions" element={<GameplaySessionViewer/>} />
-            <Route path="/player/game" element={<SkifaKahlaARGame />} />
+            <Route path="/player/rooms/:roomId/game" element={<SkifaKahlaARGame />} />
             <Route path="/player/feedbacks" element={<FeedbackPage />} />
             
             <Route path="/player/rooms/:roomId" element={<PlayerRoomPage />} />
             <Route path="/player/rooms/:roomId/join" element={<JoinRoomPage />} />
            
-            <Route path="/player/vr" element={< DungeonScene/>} />
+
             <Route path="/player/invitations" element={<PlayerInvitationPage />} />
           </Route>
         </Route>

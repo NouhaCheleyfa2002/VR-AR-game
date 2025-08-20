@@ -140,12 +140,12 @@ const MultiplayerRoomCard = ({ room, onDeleteRoom, showActions = false }) => {
           {room.participants && room.participants.length > 0 ? (
             room.participants.map((participant, index) => (
               <div
-                key={participant._id || index}
+                key={participant._id || participant.playerId || index}
                 className="flex justify-between items-center border-b border-gray-200 pb-2 last:border-b-0"
               >
                 <div className="flex items-center space-x-2">
                   <span className="text-gray-700 font-medium">
-                    participant ID: {room.participants}
+                    Player ID: {room.participants || 'Unknown'}
                   </span>
                   {participant.isHost && (
                     <Crown className="w-4 h-4 text-yellow-500" title="Host" />

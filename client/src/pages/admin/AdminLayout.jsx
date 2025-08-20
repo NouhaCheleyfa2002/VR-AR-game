@@ -38,7 +38,7 @@ const navItems = [
   { text: 'Puzzles', icon: <ExtensionIcon />, path: '/admin/puzzles' },
   { text: 'QR Codes', icon: <QrCodeIcon />, path: '/admin/QR' },
   { text: 'Rooms', icon: <MeetingRoomIcon />, path: '/admin/rooms' },
-  { text: 'Scenes', icon: <MovieIcon />, path: '/admin/scenes' },
+
   { text: 'Feedbacks', icon: <FeedbackIcon />, path: '/admin/feedbacks' },
   { text: 'Gameplay session', icon: <GamesIcon />, path: '/admin/sessions' },
   { text: 'Media Library', icon: <MovieIcon />, path: '/admin/media' },

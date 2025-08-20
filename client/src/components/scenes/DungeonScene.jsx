@@ -1385,7 +1385,7 @@ const handleModelClick = useCallback((modelName, event) => {
           textAlign: 'center',
           border: '2px solid gold',
           boxShadow: currentMode === 'ar' ? '0 0 30px gold' : '0 0 20px gold',
-          fontSize: currentMode === 'ar' ? '1.2em' : '1em' // Larger text for AR
+          fontSize: currentMode === 'ar' ? '1.2em' : '1em' 
         }}>
           <h2 style={{ 
             fontSize: currentMode === 'ar' ? '40px' : '32px', 
@@ -1580,32 +1580,11 @@ const handleModelClick = useCallback((modelName, event) => {
           zIndex: 1000,
           maxWidth: '300px'
         }}>
-          <div>📱 Mobile Touch Controls Active</div>
-          <div>Tap anywhere on screen to interact</div>
-          <div>Check console for touch debug info</div>
           <div style={{ color: 'gold' }}>Tap on the door to start!</div>
         </div>
       )}
       
-      <div style={{
-        position: 'fixed',
-        bottom: '80px',
-        left: '10px',
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        color: 'white',
-        padding: '10px',
-        borderRadius: '5px',
-        fontSize: '12px',
-        zIndex: 1000,
-        maxWidth: '300px'
-      }}>
-        <div>Mode: {currentMode}</div>
-        <div>XR Session: {xrSession ? 'Active' : 'None'}</div>
-        <div>AR Support: {supportCheckComplete ? (isARSupported ? '✅' : '❌') : '🔄'}</div>
-        <div>VR Support: {supportCheckComplete ? (isVRSupported ? '✅' : '❌') : '🔄'}</div>
-        <div>WebXR: {navigator.xr ? '✅' : '❌'}</div>
-        <div>Touch: {'ontouchstart' in window ? '✅' : '❌'}</div>
-      </div>
+      
       {!isXRActive && (
         <div style={{
           position: 'fixed',

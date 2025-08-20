@@ -10,6 +10,13 @@ export default defineConfig({
     https: {
       key: fs.readFileSync('../192.168.100.233+2-key.pem'),
       cert: fs.readFileSync('../192.168.100.233+2.pem')
+    },
+    proxy: {
+      '/api/n8n': {
+        target: 'http://192.168.100.233:5678',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/n8n/, '/webhook')
+      }
     }
   },
   optimizeDeps: {

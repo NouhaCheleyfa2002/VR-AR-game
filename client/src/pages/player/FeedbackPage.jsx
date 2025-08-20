@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Box,
   Typography,
@@ -13,66 +13,22 @@ import {
 import { toast } from 'react-toastify';
 
 import { createFeedback, getFeedbacksByPlayer } from '../../api/FeedbackApi';
+import { AuthContext } from '../../context/AuthContext'; // Adjust the path as needed
 
 const FeedbackPage = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submittedFeedbacks, setSubmittedFeedbacks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [player, setPlayer] = useState(null);
-  const [playerLoading, setPlayerLoading] = useState(true);
-  const [token, setToken] = useState(null);
+  const [playerLoading, setPlayerLoading] = useState(false);
   
-  // Get player data and token on component mount
-  useEffect(() => {
-    const fetchPlayerData = async () => {
-      try {
-        // Get token from localStorage or sessionStorage
-        const authToken = localStorage.getItem('token') || 
-                         localStorage.getItem('authToken') || 
-                         sessionStorage.getItem('token') ||
-                         sessionStorage.getItem('authToken');
-        
-        if (!authToken) {
-          console.log('No auth token found');
-          setPlayerLoading(false);
-          return;
-        }
-        
-        setToken(authToken);
-        
-        // Get user data from storage
-        const userData = localStorage.getItem('user') || 
-                        localStorage.getItem('currentUser') ||
-                        sessionStorage.getItem('user') ||
-                        sessionStorage.getItem('currentUser');
-        
-        if (userData) {
-          const parsedUser = JSON.parse(userData);
-          setPlayer(parsedUser);
-          console.log('Player data loaded from storage:', parsedUser);
-        } else {
-          // If no user data in storage, you might need to fetch it from your API
-          // Example: const response = await getCurrentUser(authToken);
-          // setPlayer(response.data);
-          console.log('No user data found in storage');
-        }
-        
-        setPlayerLoading(false);
-      } catch (error) {
-        console.error('Error fetching player data:', error);
-        setPlayerLoading(false);
-      }
-    };
+  // Use AuthContext instead of manual token retrieval
+  const { user, token } = useContext(AuthContext);
 
-    fetchPlayerData();
-  }, []);
-
-  // Extract player ID and email
-  const playerId = player?.playerId?._id || player?._id || null;
-  const playerEmail = player?.playerId?.email || player?.email || 'Anonymous';
+  // Extract player ID and email from the context user
+  const playerId = user?.playerId?._id || user?._id || null;
+  const playerEmail = user?.playerId?.email || user?.email || 'Anonymous';
   
-
   // Load previously submitted feedbacks by this player
   useEffect(() => {
     if (!playerId || !token) return;
@@ -151,23 +107,8 @@ const FeedbackPage = () => {
     }
   };
 
-  // Show loading spinner if player data is still loading
-  if (playerLoading) {
-    return (
-      <Box maxWidth="600px" mx="auto" p={4}>
-        <Typography variant="h4" gutterBottom>
-          Leave Your Feedback
-        </Typography>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-          <CircularProgress />
-          <Typography ml={2}>Loading player information...</Typography>
-        </Box>
-      </Box>
-    );
-  }
-
   // Show error state if player data is not available
-  if (!player || !playerId) {
+  if (!user || !playerId) {
     return (
       <Box maxWidth="600px" mx="auto" p={4}>
         <Typography variant="h4" gutterBottom>
@@ -199,10 +140,10 @@ const FeedbackPage = () => {
         {/* Debug info - remove this in production */}
         <Paper sx={{ p: 2, mt: 2, backgroundColor: '#f5f5f5' }}>
           <Typography variant="subtitle2">Debug Information:</Typography>
-          <Typography variant="body2">Player object: {JSON.stringify(player, null, 2)}</Typography>
+          <Typography variant="body2">User object: {JSON.stringify(user, null, 2)}</Typography>
           <Typography variant="body2">Token available: {!!token}</Typography>
-          <Typography variant="body2">LocalStorage token: {!!(localStorage.getItem('token') || localStorage.getItem('authToken'))}</Typography>
-          <Typography variant="body2">LocalStorage user: {!!(localStorage.getItem('user') || localStorage.getItem('currentUser'))}</Typography>
+          <Typography variant="body2">Player ID: {playerId}</Typography>
+          <Typography variant="body2">Player Email: {playerEmail}</Typography>
         </Paper>
       </Box>
     );
@@ -214,13 +155,6 @@ const FeedbackPage = () => {
         Leave Your Feedback
       </Typography>
       
-      {/* Show current player info */}
-      <Paper elevation={1} sx={{ p: 2, mb: 3, backgroundColor: '#e3f2fd' }}>
-        <Typography variant="subtitle2">
-          Logged in as: {playerEmail}
-        </Typography>
-        
-      </Paper>
 
       <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
         <form onSubmit={handleSubmit}>

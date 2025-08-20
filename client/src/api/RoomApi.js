@@ -2,7 +2,6 @@ import axios from 'axios';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-// GET all rooms (admin only)
 export const getAllRooms = async () => {
   try {
     const response = await axios.get(`${backendUrl}/rooms`);
@@ -14,7 +13,7 @@ export const getAllRooms = async () => {
   }
 };
 
-// GET room by ID - FIXED
+
 export const getRoomById = async (id) => {
   try {
     const response = await axios.get(`${backendUrl}/rooms/${id}`);
@@ -26,7 +25,7 @@ export const getRoomById = async (id) => {
   }
 };
 
-// GET room by ID - FIXED
+
 export const getRoomBygameId = async (gameId) => {
   try {
     const response = await axios.get(`${backendUrl}/rooms/${gameId}`);
@@ -39,17 +38,21 @@ export const getRoomBygameId = async (gameId) => {
 };
 
 
-// GET room by code (e.g., when scanning QR) - FIXED
-export const getRoomByCode = async (code) => {
+export const getRoomByCode = async (code, token) => {
   try {
-    const response = await axios.get(`${backendUrl}/rooms/code/${code}`);
+    const response = await axios.get(`${backendUrl}/rooms/code/${code}`, {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+     });
     
     return response.data.data || response.data;
   } catch (error) {
     console.error('Error fetching room by code:', error);
     throw error;
   }
-};
+};  
 
 export const joinRoomByCode = async (code, token) => {
    try {
@@ -69,7 +72,7 @@ export const joinRoomByCode = async (code, token) => {
      }
     };
 
-// join a room
+
 export const joinRoom = async (roomId) => {
   try {
     const response = await axios.post(
@@ -84,7 +87,6 @@ export const joinRoom = async (roomId) => {
   }
 };
 
-// POST create a room - FIXED
 export const createRoom = async (data) => {
   try {
     const response = await axios.post(`${backendUrl}/rooms`, data);
@@ -96,23 +98,37 @@ export const createRoom = async (data) => {
   }
 };
 
-// PUT update a room - FIXED
 export const updateRoom = async (roomId, data) => {
   try {
-    console.log(roomId);
+    console.log('🚀 Updating room:', roomId);
+    console.log('📤 Update data:', JSON.stringify(data, null, 2));
     
     const response = await axios.put(`${backendUrl}/rooms/${roomId}`, data);
     
-    
-    // Return the actual room object, not force it to be an array
+    console.log('✅ Room updated successfully:', response.data);
     return response.data.data || response.data;
   } catch (error) {
-    console.error('Error updating room:', error);
+    // Enhanced error logging
+    console.error('❌ Error updating room:');
+    console.error('📍 Room ID:', roomId);
+    console.error('📤 Data sent:', JSON.stringify(data, null, 2));
+    console.error('🔢 Status:', error.response?.status);
+    console.error('💬 Status Text:', error.response?.statusText);
+    console.error('🔗 URL:', error.config?.url);
+    console.error('📋 Backend Response:', error.response?.data);
+    
+    if (error.response?.data?.message) {
+      console.error('💡 Backend Message:', error.response.data.message);
+    }
+    
+    if (error.response?.data?.errors) {
+      console.error('❗ Validation Errors:', error.response.data.errors);
+    }
+    
     throw error;
   }
 };
 
-// DELETE a room
 export const deleteRoom = async (id) => {
   try {
     const response = await axios.delete(`${backendUrl}/rooms/${id}`);

@@ -202,26 +202,36 @@ const PlayerRoomPage = () => {
 
   const handleStartGame = async () => {
     if (!allReady || !room) return;
-
+  
     try {
       setUpdating(true);
-      const updatedRoomData = { ...room, roomStatus: 'Active' };
-
-      await updateRoom(room.roomId, updatedRoomData);
-
+      
+      // FIXED: Use isActive instead of roomStatus
+      const roomUpdateData = { 
+        isActive: true  // Boolean value, not string
+      };
+  
+      console.log('🚀 Starting game - updating room with data:', roomUpdateData);
+  
+      await updateRoom(room._id, roomUpdateData);
+  
       setSnackbar({
         open: true,
         message: 'Game started!',
         severity: 'success'
       });
-
-      // TODO: Navigate to game logic
-      console.log('Start game logic - Room:', updatedRoomData);
+  
+      navigate(`/player/rooms/${roomId}/game`);
     } catch (error) {
       console.error('Error starting game:', error);
+      
+      if (error.response?.data) {
+        console.error('Backend error details:', error.response.data);
+      }
+      
       setSnackbar({
         open: true,
-        message: 'Failed to start game',
+        message: `Failed to start game: ${error.response?.data?.message || error.message}`,
         severity: 'error'
       });
     } finally {

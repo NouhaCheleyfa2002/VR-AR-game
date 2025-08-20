@@ -8,14 +8,18 @@ const ChatBot = () => {
     {
       id: 1,
       type: 'bot',
-      message: "Welcome to Skifa Kahla! I'm your AI guide. Need a fact about the place you're visting?",
+      message: "Welcome to Skifa Kahla! I'm your AI guide. Ask me anything!",
       timestamp: new Date()
     }
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Configuration - Using Vite proxy
+  const N8N_WEBHOOK_URL = '/api/n8n/invoke_n8n_agent';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -32,7 +36,7 @@ const ChatBot = () => {
   }, [isOpen, isMinimized]);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || isTyping) return;
 
     const userMessage = {
       id: Date.now(),
@@ -42,24 +46,71 @@ const ChatBot = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentMessage = inputMessage;
     setInputMessage('');
     setIsTyping(true);
 
-    // Simulate bot response
-    setTimeout(() => {
-      const botResponse = getBotResponse(inputMessage);
+    try {
+      // Call your n8n RAG workflow
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chatInput: currentMessage,
+          sessionId: sessionId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Extract the bot response - adjust this based on your n8n response structure
+      const botResponseText = data.output || data.response || data.text || "I'm having trouble accessing the knowledge base right now. Please try again.";
+
       const botMessage = {
         id: Date.now() + 1,
         type: 'bot',
-        message: botResponse,
+        message: botResponseText,
         timestamp: new Date()
       };
+
       setMessages(prev => [...prev, botMessage]);
+      
+    } catch (error) {
+      console.error('Error calling n8n webhook:', error);
+      
+      const errorMessage = {
+        id: Date.now() + 1,
+        type: 'bot',
+        message: "Sorry, I'm experiencing technical difficulties. Please try again later. For now, here's some general help about Skifa Kahla fortress exploration.",
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+      
+      // Fallback to original hardcoded responses
+      setTimeout(() => {
+        const fallbackResponse = getFallbackResponse(currentMessage);
+        const fallbackMessage = {
+          id: Date.now() + 2,
+          type: 'bot',
+          message: fallbackResponse,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, fallbackMessage]);
+      }, 1000);
+    } finally {
       setIsTyping(false);
-    }, 1000 + Math.random() * 2000);
+    }
   };
 
-  const getBotResponse = (userInput) => {
+  // Fallback responses (your original logic) in case n8n is down
+  const getFallbackResponse = (userInput) => {
     const input = userInput.toLowerCase();
     
     if (input.includes('map') || input.includes('fragment')) {
@@ -75,7 +126,7 @@ const ChatBot = () => {
     } else if (input.includes('history') || input.includes('fortress')) {
       return "🏛️ Skifa Kahla was a crucial Ottoman outpost. Its name means 'Black Hall' in Arabic. The fortress holds many secrets from the Ottoman era!";
     } else {
-      return "🤔 Interesting question! I'm here to help with your fortress exploration. Ask me about puzzles, map fragments, or the history of Skifa Kahla!";
+      return "🤔 Let me search my knowledge base for information about that. (Fallback: I'm here to help with your fortress exploration!)";
     }
   };
 
@@ -122,8 +173,8 @@ const ChatBot = () => {
               <Bot size={18} className="text-white" />
             </div>
             <div>
-              <h3 className="text-white font-semibold text-sm">Fortress Guide</h3>
-              <p className="text-amber-100 text-xs">AI Assistant</p>
+              <h3 className="text-white font-semibold text-sm">Assistant</h3>
+              <p className="text-amber-100 text-xs">AI Companion</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -158,7 +209,7 @@ const ChatBot = () => {
                         : 'bg-gray-800 text-gray-100 border border-gray-700'
                     }`}
                   >
-                    <p>{msg.message}</p>
+                    <p className="whitespace-pre-wrap">{msg.message}</p>
                     <p className={`text-xs mt-1 ${
                       msg.type === 'user' ? 'text-amber-100' : 'text-gray-400'
                     }`}>
@@ -191,8 +242,9 @@ const ChatBot = () => {
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Ask about puzzles, history, or get hints..."
+                  placeholder="Ask me anything from the knowledge base..."
                   className="flex-1 bg-gray-700 text-white px-3 py-2 rounded-lg text-sm border border-gray-600 focus:border-amber-600 focus:ring-1 focus:ring-amber-600 focus:outline-none"
+                  disabled={isTyping}
                 />
                 <button
                   onClick={handleSendMessage}

@@ -41,10 +41,24 @@ export const getLevelsByScenarioId = async (scenarioId) => {
 
 export const createLevel = async (data) => {
   try {
+    console.log('🚀 API: Sending level data:', JSON.stringify(data, null, 2));
+    
     const response = await axios.post(`${backendUrl}/levels`, data);
+    
+    console.log('✅ API: Level created successfully:', response.data);
     return response.data.data || response.data;
   } catch (error) {
-    console.error('Error creating level:', error);
+    // CRITICAL: Log the actual backend error response
+    console.error('❌ Status:', error.response?.status);
+    console.error('❌ Backend Error Response:', error.response?.data);
+    console.error('❌ Error Message from Backend:', error.response?.data?.message);
+    console.error('❌ Validation Errors:', error.response?.data?.errors);
+    
+    // Also log request details
+    console.error('📤 Request URL:', error.config?.url);
+    console.error('📤 Request Headers:', error.config?.headers);
+    console.error('📤 Request Data:', JSON.parse(error.config?.data || '{}'));
+    
     throw error;
   }
 };
